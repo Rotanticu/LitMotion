@@ -145,6 +145,27 @@ namespace LitMotion.Animation.Editor
             {
                 if (componentsProperty.arraySize != prevArraySize)
                 {
+                    if (prevArraySize < componentsProperty.arraySize)
+                    {
+                        var last_prop = componentsProperty.GetArrayElementAtIndex(componentsProperty.arraySize - 1);
+                        var last = last_prop.managedReferenceValue;
+                        object src = null;
+                        for (int i = 0; i < componentsProperty.arraySize - 1; ++i)
+                        {
+                            var value = componentsProperty.GetArrayElementAtIndex(i).managedReferenceValue;
+                            if (value == last)
+                            {
+                                src = value;
+                                break;
+                            }
+                        }
+                        if (src != null)
+                        {
+                            var cloned = JsonUtility.FromJson(JsonUtility.ToJson(src), src.GetType());
+                            last_prop.managedReferenceValue = cloned;
+                            serializedObject.ApplyModifiedProperties();
+                        }
+                    }
                     RefleshComponentsView(true);
                     prevArraySize = componentsProperty.arraySize;
                 }
