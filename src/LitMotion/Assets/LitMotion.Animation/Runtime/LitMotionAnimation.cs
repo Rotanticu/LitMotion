@@ -16,17 +16,24 @@ namespace LitMotion.Animation
 
         [SerializeField] bool playOnAwake = true;
         [SerializeField] AnimationMode animationMode;
+        [SerializeField] bool solo;
+        public string GroupId;
+        [SerializeField] GameObject groupIdSource;
+        
 
         [SerializeReference]
         LitMotionAnimationComponent[] components;
 
         Queue<LitMotionAnimationComponent> queue = new();
         FastListCore<LitMotionAnimationComponent> playingComponents;
+        static HashSet<LitMotionAnimation> playingLitMotionAnimations = new();
 
         public IReadOnlyList<LitMotionAnimationComponent> Components => components;
 
         void Start()
         {
+            if (groupIdSource != null)
+                GroupId += groupIdSource.GetInstanceID();
             if (playOnAwake) Play();
         }
 
@@ -79,6 +86,14 @@ namespace LitMotion.Animation
             if (isPlaying) return;
 
             playingComponents.Clear();
+            if (solo)
+            {
+                foreach (var i in playingLitMotionAnimations)
+                    if (i != null)
+                        i.StopByGroupId(GroupId);
+                playingLitMotionAnimations.RemoveWhere(e => e == null || !e.IsPlaying);
+            }
+            playingLitMotionAnimations.Add(this);
 
             switch (animationMode)
             {
@@ -148,6 +163,12 @@ namespace LitMotion.Animation
             queue.Clear();
         }
 
+        public void StopByGroupId(string id)
+        {
+            if (GroupId == id || string.IsNullOrEmpty(id))
+                Stop();
+        }
+
         public void Restart()
         {
             Stop();
@@ -190,5 +211,12 @@ namespace LitMotion.Animation
         {
             Stop();
         }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void OnDomainReload()
+        {
+            playingLitMotionAnimations = new();
+        }
+
     }
 }
