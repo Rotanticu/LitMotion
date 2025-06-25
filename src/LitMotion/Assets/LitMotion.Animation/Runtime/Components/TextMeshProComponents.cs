@@ -89,9 +89,7 @@ namespace LitMotion.Animation.Components
         protected override Color GetValue(TextMeshProUGUI target) => target.canvasRenderer.GetColor();
         protected override void SetValue(TextMeshProUGUI target, in Color value)
         {
-            var c = target.color;
-            c.a = value.a;
-            target.color = c;
+            target.havePropertiesChanged = true;
             target.canvasRenderer.SetColor(value);
         }
     }
