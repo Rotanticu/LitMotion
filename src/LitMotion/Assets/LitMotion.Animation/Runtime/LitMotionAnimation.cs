@@ -26,7 +26,7 @@ namespace LitMotion.Animation
 
         Queue<LitMotionAnimationComponent> queue = new();
         FastListCore<LitMotionAnimationComponent> playingComponents;
-        static HashSet<LitMotionAnimation> playingLitMotionAnimations = new();
+        static List<LitMotionAnimation> playingLitMotionAnimations = new();
 
         public IReadOnlyList<LitMotionAnimationComponent> Components => components;
 
@@ -92,12 +92,15 @@ namespace LitMotion.Animation
             playingComponents.Clear();
             if (solo)
             {
-                foreach (var i in playingLitMotionAnimations)
-                    if (i != null)
-                        i.StopByGroupId(GroupId);
-                playingLitMotionAnimations.RemoveWhere(e => e == null || !e.IsPlaying);
+                for (int i = playingLitMotionAnimations.Count - 1; 0 <= i; --i)
+                {
+                    var anim = playingLitMotionAnimations[i];
+                    if (anim == null || anim.StopByGroupId(GroupId))
+                        playingLitMotionAnimations.RemoveAt(i);
+                }
             }
-            playingLitMotionAnimations.Add(this);
+            if (!playingLitMotionAnimations.Contains(this))
+                playingLitMotionAnimations.Add(this);
 
             switch (animationMode)
             {
@@ -167,10 +170,14 @@ namespace LitMotion.Animation
             queue.Clear();
         }
 
-        public void StopByGroupId(string id)
+        public bool StopByGroupId(string id)
         {
             if (GroupId == id || string.IsNullOrEmpty(id))
+            {
                 Stop();
+                return true;
+            }
+            return false;
         }
 
         public void Restart()
