@@ -30,10 +30,14 @@ namespace LitMotion.Animation
 
         public IReadOnlyList<LitMotionAnimationComponent> Components => components;
 
-        void Start()
+        void Awake()
         {
             if (groupIdSource != null)
                 GroupId += groupIdSource.GetInstanceID();
+        }
+
+        void Start()
+        {
             if (playOnAwake) Play();
         }
 
