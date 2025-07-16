@@ -1,3 +1,6 @@
+# Main modifications
+Vectorize the animation target values to support different animation algorithms such as Tween and Spring.
+
 # LitMotion
 
 Lightning-fast and Zero Allocation Tween Library for Unity.
