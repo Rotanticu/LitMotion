@@ -34,36 +34,45 @@ namespace LitMotion
         {
             get
             {
-                return MotionManager.GetDataRef(this, false).State.Time;
+                return MotionManager.GetStateRef(this, false).Time;
             }
             set
             {
                 MotionManager.SetTime(this, value);
             }
         }
-
-        /// <summary>
-        /// The delay of the motion
-        /// </summary>
-        public readonly float Delay
+        //todo
+        public readonly bool IsInfinite
         {
             get
             {
-                return MotionManager.GetDataRef(this, false).Parameters.Delay;
+                //return MotionManager.GetDataRef(this, false).IsInfinite;
+                return false;
             }
         }
-
-        /// <summary>
-        /// The duration of the motion
-        /// </summary>
-        public readonly float Duration
-        {
-            get
-            {
-                return MotionManager.GetDataRef(this, false).Parameters.Duration;
-            }
-        }
-
+        //todo
+        // /// <summary>
+        // /// The delay of the motion
+        // /// </summary>
+        // public readonly float Delay
+        // {
+        //     get
+        //     {
+        //         return MotionManager.GetDataRef(this, false).Parameters.Delay;
+        //     }
+        // }
+        //todo
+        // /// <summary>
+        // /// The duration of the motion
+        // /// </summary>
+        // public readonly float Duration
+        // {
+        //     get
+        //     {
+        //         return MotionManager.GetDataRef(this, false).Parameters.Duration;
+        //     }
+        // }
+        //todo
         /// <summary>
         /// The total duration of the motion
         /// </summary>
@@ -71,20 +80,21 @@ namespace LitMotion
         {
             get
             {
-                return MotionManager.GetDataRef(this, false).Parameters.TotalDuration;
+                //return MotionManager.GetDataRef(this, false).GetDuration();
+                return 1;
             }
         }
-
-        /// <summary>
-        /// The number of loops
-        /// </summary>
-        public readonly int Loops
-        {
-            get
-            {
-                return MotionManager.GetDataRef(this, false).Parameters.Loops;
-            }
-        }
+        //todo
+        // /// <summary>
+        // /// The number of loops
+        // /// </summary>
+        // public readonly int Loops
+        // {
+        //     get
+        //     {
+        //         return MotionManager.GetDataRef(this, false).Parameters.Loops;
+        //     }
+        // }
 
         /// <summary>
         /// The number of loops completed
@@ -93,7 +103,7 @@ namespace LitMotion
         {
             get
             {
-                return MotionManager.GetDataRef(this).State.CompletedLoops;
+                return MotionManager.GetStateRef(this).CompletedLoops;
             }
         }
 
@@ -104,11 +114,11 @@ namespace LitMotion
         {
             get
             {
-                return MotionManager.GetDataRef(this).State.PlaybackSpeed;
+                return MotionManager.GetStateRef(this).PlaybackSpeed;
             }
             set
             {
-                MotionManager.GetDataRef(this).State.PlaybackSpeed = value;
+                MotionManager.GetStateRef(this).PlaybackSpeed = value;
             }
         }
 

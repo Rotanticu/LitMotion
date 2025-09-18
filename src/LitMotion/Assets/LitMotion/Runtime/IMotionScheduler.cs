@@ -9,14 +9,16 @@ namespace LitMotion
         /// Schedule the motion.
         /// </summary>
         /// <typeparam name="TValue">The type of value to animate</typeparam>
+        /// <typeparam name="VValue">The type of vectorized value for internal processing</typeparam>
         /// <typeparam name="TOptions">The type of special parameters given to the motion data</typeparam>
-        /// <typeparam name="TAdapter">The type of adapter that support value animation</typeparam>
+        /// <typeparam name="TAnimationSpec">The type of animation specification</typeparam>
         /// <param name="builder">Motion builder</param>
         /// <returns>Motion handle</returns>
-        MotionHandle Schedule<TValue, TOptions, TAdapter>(ref MotionBuilder<TValue, TOptions, TAdapter> builder)
+        MotionHandle Schedule<TValue, VValue, TOptions, TAnimationSpec>(ref MotionBuilder<TValue, VValue, TOptions, TAnimationSpec> builder)
             where TValue : unmanaged
-            where TOptions : unmanaged, IMotionOptions
-            where TAdapter : unmanaged, IMotionAdapter<TValue, TOptions>;
+            where VValue : unmanaged
+            where TOptions : unmanaged, ITweenOptions
+            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<VValue, TOptions>;
     }
 
     /// <summary>

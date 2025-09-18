@@ -84,7 +84,7 @@ namespace LitMotion
                     MotionDispatcher.GetUnhandledExceptionHandler()?.Invoke(ex);
                 }
 
-                if (Handle.IsActive() && !MotionManager.GetDataRef(Handle, false).State.IsPreserved)
+                if (Handle.IsActive() && !MotionManager.GetStateRef(Handle, false).IsPreserved)
                 {
                     Release();
                 }

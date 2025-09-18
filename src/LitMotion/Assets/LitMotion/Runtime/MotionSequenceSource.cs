@@ -109,7 +109,7 @@ namespace LitMotion
         void OnComplete()
         {
             if (!handle.IsActive()) return;
-            if (MotionManager.GetDataRef(handle, false).State.IsPreserved) return;
+            if (MotionManager.GetStateRef(handle, false).IsPreserved) return;
 
             Return(this);
         }

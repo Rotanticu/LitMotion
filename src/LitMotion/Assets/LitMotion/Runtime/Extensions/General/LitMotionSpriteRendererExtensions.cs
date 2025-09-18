@@ -15,9 +15,9 @@ namespace LitMotion.Extensions
         /// <param name="builder">This builder</param>
         /// <param name="transform"></param>
         /// <returns>Handle of the created motion data.</returns>
-        public static MotionHandle BindToColor<TOptions, TAdapter>(this MotionBuilder<Color, TOptions, TAdapter> builder, SpriteRenderer spriteRenderer)
-            where TOptions : unmanaged, IMotionOptions
-            where TAdapter : unmanaged, IMotionAdapter<Color, TOptions>
+        public static MotionHandle BindToColor<TOptions, TAnimationSpec>(this MotionBuilder<Color, Color, TOptions, TAnimationSpec> builder, SpriteRenderer spriteRenderer)
+            where TOptions : unmanaged, ITweenOptions
+            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<Color, TOptions>
         {
             Error.IsNull(spriteRenderer);
             return builder.Bind(spriteRenderer, static (x, m) =>
@@ -34,9 +34,9 @@ namespace LitMotion.Extensions
         /// <param name="builder">This builder</param>
         /// <param name="transform"></param>
         /// <returns>Handle of the created motion data.</returns>
-        public static MotionHandle BindToColorR<TOptions, TAdapter>(this MotionBuilder<float, TOptions, TAdapter> builder, SpriteRenderer spriteRenderer)
-            where TOptions : unmanaged, IMotionOptions
-            where TAdapter : unmanaged, IMotionAdapter<float, TOptions>
+        public static MotionHandle BindToColorR<TOptions, TAnimationSpec>(this MotionBuilder<float, float, TOptions, TAnimationSpec> builder, SpriteRenderer spriteRenderer)
+            where TOptions : unmanaged, ITweenOptions
+            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<float, TOptions>
         {
             Error.IsNull(spriteRenderer);
             return builder.Bind(spriteRenderer, static (x, m) =>
@@ -55,9 +55,9 @@ namespace LitMotion.Extensions
         /// <param name="builder">This builder</param>
         /// <param name="transform"></param>
         /// <returns>Handle of the created motion data.</returns>
-        public static MotionHandle BindToColorG<TOptions, TAdapter>(this MotionBuilder<float, TOptions, TAdapter> builder, SpriteRenderer spriteRenderer)
-            where TOptions : unmanaged, IMotionOptions
-            where TAdapter : unmanaged, IMotionAdapter<float, TOptions>
+        public static MotionHandle BindToColorG<TOptions, TAnimationSpec>(this MotionBuilder<float, float, TOptions, TAnimationSpec> builder, SpriteRenderer spriteRenderer)
+            where TOptions : unmanaged, ITweenOptions
+            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<float, TOptions>
         {
             Error.IsNull(spriteRenderer);
             return builder.Bind(spriteRenderer, static (x, m) =>
@@ -76,9 +76,9 @@ namespace LitMotion.Extensions
         /// <param name="builder">This builder</param>
         /// <param name="transform"></param>
         /// <returns>Handle of the created motion data.</returns>
-        public static MotionHandle BindToColorB<TOptions, TAdapter>(this MotionBuilder<float, TOptions, TAdapter> builder, SpriteRenderer spriteRenderer)
-            where TOptions : unmanaged, IMotionOptions
-            where TAdapter : unmanaged, IMotionAdapter<float, TOptions>
+        public static MotionHandle BindToColorB<TOptions, TAnimationSpec>(this MotionBuilder<float, float, TOptions, TAnimationSpec> builder, SpriteRenderer spriteRenderer)
+            where TOptions : unmanaged, ITweenOptions
+            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<float, TOptions>
         {
             Error.IsNull(spriteRenderer);
             return builder.Bind(spriteRenderer, static (x, m) =>
@@ -97,9 +97,9 @@ namespace LitMotion.Extensions
         /// <param name="builder">This builder</param>
         /// <param name="transform"></param>
         /// <returns>Handle of the created motion data.</returns>
-        public static MotionHandle BindToColorA<TOptions, TAdapter>(this MotionBuilder<float, TOptions, TAdapter> builder, SpriteRenderer spriteRenderer)
-            where TOptions : unmanaged, IMotionOptions
-            where TAdapter : unmanaged, IMotionAdapter<float, TOptions>
+        public static MotionHandle BindToColorA<TOptions, TAnimationSpec>(this MotionBuilder<float, float, TOptions, TAnimationSpec> builder, SpriteRenderer spriteRenderer)
+            where TOptions : unmanaged, ITweenOptions
+            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<float, TOptions>
         {
             Error.IsNull(spriteRenderer);
             return builder.Bind(spriteRenderer, static (x, m) =>

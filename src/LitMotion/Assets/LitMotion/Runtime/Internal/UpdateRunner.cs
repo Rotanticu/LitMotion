@@ -12,12 +12,13 @@ namespace LitMotion
         public void Reset();
     }
 
-    internal sealed class UpdateRunner<TValue, TOptions, TAdapter> : IUpdateRunner
+    internal sealed class UpdateRunner<TValue, VValue, TOptions, TAnimationSpec> : IUpdateRunner
         where TValue : unmanaged
+        where VValue : unmanaged
         where TOptions : unmanaged, IMotionOptions
-        where TAdapter : unmanaged, IMotionAdapter<TValue, TOptions>
+        where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<VValue, TOptions>
     {
-        public UpdateRunner(MotionStorage<TValue, TOptions, TAdapter> storage, double time, double unscaledTime, double realtime)
+        public UpdateRunner(MotionStorage<TValue, VValue, TOptions, TAnimationSpec> storage, double time, double unscaledTime, double realtime)
         {
             this.storage = storage;
             prevTime = time;
@@ -25,13 +26,13 @@ namespace LitMotion
             prevRealtime = realtime;
         }
 
-        readonly MotionStorage<TValue, TOptions, TAdapter> storage;
+        readonly MotionStorage<TValue, VValue, TOptions, TAnimationSpec> storage;
 
         double prevTime;
         double prevUnscaledTime;
         double prevRealtime;
 
-        public MotionStorage<TValue, TOptions, TAdapter> Storage => storage;
+        public MotionStorage<TValue, VValue, TOptions, TAnimationSpec> Storage => storage;
         IMotionStorage IUpdateRunner.Storage => storage;
 
         public unsafe void Update(double time, double unscaledTime, double realtime)
@@ -47,10 +48,10 @@ namespace LitMotion
             prevUnscaledTime = unscaledTime;
             prevRealtime = realtime;
 
-            fixed (MotionData<TValue, TOptions>* dataPtr = storage.GetDataSpan())
+            fixed (TargetBasedAnimation<TValue, VValue, TOptions, TAnimationSpec>* dataPtr = storage.GetDataSpan())
             {
                 // update data
-                var job = new MotionUpdateJob<TValue, TOptions, TAdapter>()
+                var job = new MotionUpdateJob<TValue, VValue, TOptions, TAnimationSpec>()
                 {
                     DataPtr = dataPtr,
                     DeltaTime = deltaTime,
@@ -67,11 +68,11 @@ namespace LitMotion
                 for (int i = 0; i < managedDataSpan.Length; i++)
                 {
                     var currentDataPtr = dataPtr + i;
-                    ref var state = ref currentDataPtr->Core.State;
+                    var state = currentDataPtr->Core.State;
 
-                    if (state.IsInSequence) continue;
+                    if (state->IsInSequence) continue;
 
-                    var status = state.Status;
+                    var status = state->Status;
                     ref var managedData = ref managedDataSpan[i];
                     if (status is MotionStatus.Playing or MotionStatus.Completed || (status == MotionStatus.Delayed && !managedData.SkipValuesDuringDelay))
                     {
@@ -84,17 +85,17 @@ namespace LitMotion
                             MotionDispatcher.GetUnhandledExceptionHandler()?.Invoke(ex);
                             if (managedData.CancelOnError)
                             {
-                                state.Status = MotionStatus.Canceled;
+                                state->Status = MotionStatus.Canceled;
                                 managedData.OnCancelAction?.Invoke();
                             }
                         }
 
-                        if (state.WasLoopCompleted)
+                        if (state->WasLoopCompleted)
                         {
-                            managedData.InvokeOnLoopComplete(state.CompletedLoops);
+                            managedData.InvokeOnLoopComplete(state->CompletedLoops);
                         }
 
-                        if (status is MotionStatus.Completed && state.WasStatusChanged)
+                        if (status is MotionStatus.Completed && state->WasStatusChanged)
                         {
                             managedData.InvokeOnComplete();
                         }

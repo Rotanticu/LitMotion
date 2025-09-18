@@ -17,9 +17,9 @@ namespace LitMotion.Extensions
         /// <param name="builder">This builder</param>
         /// <param name="transform"></param>
         /// <returns>Handle of the created motion data.</returns>
-        public static MotionHandle BindToVolume<TOptions, TAdapter>(this MotionBuilder<float, TOptions, TAdapter> builder, AudioSource audioSource)
-            where TOptions : unmanaged, IMotionOptions
-            where TAdapter : unmanaged, IMotionAdapter<float, TOptions>
+        public static MotionHandle BindToVolume<TOptions, TAnimationSpec>(this MotionBuilder<float, float, TOptions, TAnimationSpec> builder, AudioSource audioSource)
+            where TOptions : unmanaged, ITweenOptions
+            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<float, TOptions>
         {
             Error.IsNull(audioSource);
             return builder.Bind(audioSource, static (x, target) =>
@@ -36,9 +36,9 @@ namespace LitMotion.Extensions
         /// <param name="builder">This builder</param>
         /// <param name="transform"></param>
         /// <returns>Handle of the created motion data.</returns>
-        public static MotionHandle BindToPitch<TOptions, TAdapter>(this MotionBuilder<float, TOptions, TAdapter> builder, AudioSource audioSource)
-            where TOptions : unmanaged, IMotionOptions
-            where TAdapter : unmanaged, IMotionAdapter<float, TOptions>
+        public static MotionHandle BindToPitch<TOptions, TAnimationSpec>(this MotionBuilder<float, float, TOptions, TAnimationSpec> builder, AudioSource audioSource)
+            where TOptions : unmanaged, ITweenOptions
+            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<float, TOptions>
         {
             Error.IsNull(audioSource);
             return builder.Bind(audioSource, static (x, target) =>
@@ -55,9 +55,9 @@ namespace LitMotion.Extensions
         /// <param name="builder">This builder</param>
         /// <param name="transform"></param>
         /// <returns>Handle of the created motion data.</returns>
-        public static MotionHandle BindToAudioMixerFloat<TOptions, TAdapter>(this MotionBuilder<float, TOptions, TAdapter> builder, AudioMixer audioMixer, string name)
-            where TOptions : unmanaged, IMotionOptions
-            where TAdapter : unmanaged, IMotionAdapter<float, TOptions>
+        public static MotionHandle BindToAudioMixerFloat<TOptions, TAnimationSpec>(this MotionBuilder<float, float, TOptions, TAnimationSpec> builder, AudioMixer audioMixer, string name)
+            where TOptions : unmanaged, ITweenOptions
+            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<float, TOptions>
         {
             Error.IsNull(audioMixer);
             return builder.Bind(audioMixer, name, static (x, audioMixer, name) =>

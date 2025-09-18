@@ -12,12 +12,13 @@ namespace LitMotion
             this.dispatcher = dispatcher;
         }
 
-        public MotionHandle Schedule<TValue, TOptions, TAdapter>(ref MotionBuilder<TValue, TOptions, TAdapter> builder)
+        public MotionHandle Schedule<TValue, VValue, TOptions, TAnimationSpec>(ref MotionBuilder<TValue, VValue, TOptions, TAnimationSpec> builder)
             where TValue : unmanaged
-            where TOptions : unmanaged, IMotionOptions
-            where TAdapter : unmanaged, IMotionAdapter<TValue, TOptions>
+            where VValue : unmanaged
+            where TOptions : unmanaged, ITweenOptions
+            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<VValue, TOptions>
         {
-            return dispatcher.GetOrCreateRunner<TValue, TOptions, TAdapter>().Storage.Create(ref builder);
+            return dispatcher.GetOrCreateRunner<TValue, VValue, TOptions, TAnimationSpec>().Storage.Create(ref builder);
         }
     }
 
@@ -62,13 +63,14 @@ namespace LitMotion
         /// Ensures the storage capacity until it reaches at least capacity.
         /// </summary>
         /// <param name="capacity">The minimum capacity to ensure</param>
-        public void EnsureStorageCapacity<TValue, TOptions, TAdapter>(int capacity)
+        public void EnsureStorageCapacity<TValue, VValue, TOptions, TAnimationSpec>(int capacity)
             where TValue : unmanaged
+            where VValue : unmanaged
             where TOptions : unmanaged, IMotionOptions
-            where TAdapter : unmanaged, IMotionAdapter<TValue, TOptions>
+            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<VValue, TOptions>
         {
 
-            GetOrCreateRunner<TValue, TOptions, TAdapter>().Storage.EnsureCapacity(capacity);
+            GetOrCreateRunner<TValue, VValue, TOptions, TAnimationSpec>().Storage.EnsureCapacity(capacity);
         }
 
         /// <summary>
@@ -98,22 +100,23 @@ namespace LitMotion
             time = 0;
         }
 
-        internal UpdateRunner<TValue, TOptions, TAdapter> GetOrCreateRunner<TValue, TOptions, TAdapter>()
+        internal UpdateRunner<TValue, VValue, TOptions, TAnimationSpec> GetOrCreateRunner<TValue, VValue, TOptions, TAnimationSpec>()
             where TValue : unmanaged
+            where VValue : unmanaged
             where TOptions : unmanaged, IMotionOptions
-            where TAdapter : unmanaged, IMotionAdapter<TValue, TOptions>
+            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<VValue, TOptions>
         {
-            var key = typeof((TValue, TOptions, TAdapter));
+            var key = typeof((TValue, TOptions, TAnimationSpec));
             if (!runners.TryGetValue(key, out var runner))
             {
-                var storage = new MotionStorage<TValue, TOptions, TAdapter>(MotionManager.MotionTypeCount);
+                var storage = new MotionStorage<TValue, VValue, TOptions, TAnimationSpec>(MotionManager.MotionTypeCount);
                 MotionManager.Register(storage);
 
-                runner = new UpdateRunner<TValue, TOptions, TAdapter>(storage, 0, 0, 0);
+                runner = new UpdateRunner<TValue, VValue, TOptions, TAnimationSpec>(storage, 0, 0, 0);
                 runners.Add(key, runner);
             }
 
-            return (UpdateRunner<TValue, TOptions, TAdapter>)runner;
+            return (UpdateRunner<TValue, VValue, TOptions, TAnimationSpec>)runner;
         }
     }
 }

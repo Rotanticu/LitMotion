@@ -5,6 +5,8 @@
 using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using Unity.Collections;
+using LitMotion.Collections;
 
 namespace LitMotion
 {
@@ -39,13 +41,7 @@ namespace LitMotion
             buffer.EndValue = default;
             buffer.Options = default;
 
-            buffer.Duration = default;
-            buffer.Ease = default;
-            buffer.AnimationCurve = default;
             buffer.TimeKind = default;
-            buffer.Delay = default;
-            buffer.Loops = 1;
-            buffer.LoopType = default;
 
             buffer.State0 = default;
             buffer.State1 = default;
@@ -78,13 +74,7 @@ namespace LitMotion
         public TValue StartValue;
         public TValue EndValue;
         public TOptions Options;
-        public float Duration;
-        public Ease Ease;
         public MotionTimeKind TimeKind;
-        public float Delay;
-        public int Loops = 1;
-        public DelayType DelayType;
-        public LoopType LoopType;
         public bool CancelOnError;
         public bool SkipValuesDuringDelay;
         public bool ImmediateBind = true;
@@ -97,24 +87,24 @@ namespace LitMotion
         public Action<int> OnLoopCompleteAction;
         public Action OnCompleteAction;
         public Action OnCancelAction;
-        public AnimationCurve AnimationCurve;
         public IMotionScheduler Scheduler;
 
 #if LITMOTION_DEBUG
         public string DebugName;
 #endif
     }
-
     /// <summary>
     /// Supports construction, scheduling, and binding of motion entities.
     /// </summary>
     /// <typeparam name="TValue">The type of value to animate</typeparam>
+    /// <typeparam name="VValue">The type of vectorized value for internal processing</typeparam>
     /// <typeparam name="TOptions">The type of special parameters given to the motion data</typeparam>
-    /// <typeparam name="TAdapter">The type of adapter that support value animation</typeparam>
-    public struct MotionBuilder<TValue, TOptions, TAdapter> : IDisposable
+    /// <typeparam name="TAnimationSpec">The type of animation specification</typeparam>
+    public struct MotionBuilder<TValue, VValue, TOptions, TAnimationSpec> : IDisposable
         where TValue : unmanaged
-        where TOptions : unmanaged, IMotionOptions
-        where TAdapter : unmanaged, IMotionAdapter<TValue, TOptions>
+        where VValue : unmanaged
+        where TOptions : unmanaged,ITweenOptions
+        where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<VValue, TOptions>
     {
         internal MotionBuilder(MotionBuilderBuffer<TValue, TOptions> buffer)
         {
@@ -131,11 +121,11 @@ namespace LitMotion
         /// <param name="ease">The type of easing</param>
         /// <returns>This builder to allow chaining multiple method calls.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly MotionBuilder<TValue, TOptions, TAdapter> WithEase(Ease ease)
+        public readonly MotionBuilder<TValue, VValue, TOptions, TAnimationSpec> WithEase(Ease ease)
         {
             CheckEaseType(ease);
             CheckBuffer();
-            buffer.Ease = ease;
+            buffer.Options.Ease = ease;
             return this;
         }
 
@@ -145,11 +135,15 @@ namespace LitMotion
         /// <param name="animationCurve">Animation curve</param>
         /// <returns>This builder to allow chaining multiple method calls.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly MotionBuilder<TValue, TOptions, TAdapter> WithEase(AnimationCurve animationCurve)
+        public readonly MotionBuilder<TValue, VValue, TOptions, TAnimationSpec> WithEase(AnimationCurve animationCurve)
         {
             CheckBuffer();
-            buffer.AnimationCurve = animationCurve;
-            buffer.Ease = Ease.CustomAnimationCurve;
+#if LITMOTION_COLLECTIONS_2_0_OR_NEWER
+            buffer.Options.AnimationCurve = new NativeAnimationCurve(animationCurve, MotionDispatcher.Allocator.Allocator.Handle);
+#else
+            buffer.Options.AnimationCurve = new UnsafeAnimationCurve(buffer.AnimationCurve, MotionDispatcher.Allocator.Allocator.Handle);
+#endif
+            buffer.Options.Ease = Ease.CustomAnimationCurve;
             return this;
         }
 
@@ -161,11 +155,11 @@ namespace LitMotion
         /// <param name="skipValuesDuringDelay">Whether to skip updating values during the delay time</param>
         /// <returns>This builder to allow chaining multiple method calls.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly MotionBuilder<TValue, TOptions, TAdapter> WithDelay(float delay, DelayType delayType = DelayType.FirstLoop, bool skipValuesDuringDelay = true)
+        public readonly MotionBuilder<TValue, VValue, TOptions, TAnimationSpec> WithDelay(float delay, DelayType delayType = DelayType.FirstLoop, bool skipValuesDuringDelay = true)
         {
             CheckBuffer();
-            buffer.Delay = delay;
-            buffer.DelayType = delayType;
+            buffer.Options.DelayNanos = (long)(delay * 1_000_000_000); // 转换为纳秒
+            buffer.Options.DelayType = delayType;
             buffer.SkipValuesDuringDelay = skipValuesDuringDelay;
             return this;
         }
@@ -177,11 +171,11 @@ namespace LitMotion
         /// <param name="loopType">Behavior at the end of each loop</param>
         /// <returns>This builder to allow chaining multiple method calls.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly MotionBuilder<TValue, TOptions, TAdapter> WithLoops(int loops, LoopType loopType = LoopType.Restart)
+        public readonly MotionBuilder<TValue, VValue, TOptions, TAnimationSpec> WithLoops(int loops, LoopType loopType = LoopType.Restart)
         {
             CheckBuffer();
-            buffer.Loops = loops;
-            buffer.LoopType = loopType;
+            buffer.Options.Loops = loops;
+            buffer.Options.LoopType = loopType;
             return this;
         }
 
@@ -191,7 +185,7 @@ namespace LitMotion
         /// <param name="options">Option value to specify</param>
         /// <returns>This builder to allow chaining multiple method calls.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly MotionBuilder<TValue, TOptions, TAdapter> WithOptions(TOptions options)
+        public readonly MotionBuilder<TValue, VValue, TOptions, TAnimationSpec> WithOptions(TOptions options)
         {
             CheckBuffer();
             buffer.Options = options;
@@ -204,7 +198,7 @@ namespace LitMotion
         /// <param name="callback">Callback when canceled</param>
         /// <returns>This builder to allow chaining multiple method calls.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly MotionBuilder<TValue, TOptions, TAdapter> WithOnCancel(Action callback)
+        public readonly MotionBuilder<TValue, VValue, TOptions, TAnimationSpec> WithOnCancel(Action callback)
         {
             CheckBuffer();
             buffer.OnCancelAction += callback;
@@ -217,7 +211,7 @@ namespace LitMotion
         /// <param name="callback">Callback when playback ends</param>
         /// <returns>This builder to allow chaining multiple method calls.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly MotionBuilder<TValue, TOptions, TAdapter> WithOnComplete(Action callback)
+        public readonly MotionBuilder<TValue, VValue, TOptions, TAnimationSpec> WithOnComplete(Action callback)
         {
             CheckBuffer();
             buffer.OnCompleteAction += callback;
@@ -230,7 +224,7 @@ namespace LitMotion
         /// <param name="callback">Callback to be performed when each loop finishes.</param>
         /// <returns>This builder to allow chaining multiple method calls.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly MotionBuilder<TValue, TOptions, TAdapter> WithOnLoopComplete(Action<int> callback)
+        public readonly MotionBuilder<TValue, VValue, TOptions, TAnimationSpec> WithOnLoopComplete(Action<int> callback)
         {
             CheckBuffer();
             buffer.OnLoopCompleteAction += callback;
@@ -243,7 +237,7 @@ namespace LitMotion
         /// <param name="cancelOnError">Whether to cancel on error</param>
         /// <returns>This builder to allow chaining multiple method calls.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly MotionBuilder<TValue, TOptions, TAdapter> WithCancelOnError(bool cancelOnError = true)
+        public readonly MotionBuilder<TValue, VValue, TOptions, TAnimationSpec> WithCancelOnError(bool cancelOnError = true)
         {
             CheckBuffer();
             buffer.CancelOnError = cancelOnError;
@@ -256,7 +250,7 @@ namespace LitMotion
         /// <param name="immediateBind">Whether to bind on sheduling</param>
         /// <returns>This builder to allow chaining multiple method calls.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly MotionBuilder<TValue, TOptions, TAdapter> WithImmediateBind(bool immediateBind = true)
+        public readonly MotionBuilder<TValue, VValue, TOptions, TAnimationSpec> WithImmediateBind(bool immediateBind = true)
         {
             CheckBuffer();
             buffer.ImmediateBind = immediateBind;
@@ -269,7 +263,7 @@ namespace LitMotion
         /// <param name="scheduler">Scheduler</param>
         /// <returns>This builder to allow chaining multiple method calls.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly MotionBuilder<TValue, TOptions, TAdapter> WithScheduler(IMotionScheduler scheduler)
+        public readonly MotionBuilder<TValue, VValue, TOptions, TAnimationSpec> WithScheduler(IMotionScheduler scheduler)
         {
             CheckBuffer();
             buffer.Scheduler = scheduler;
@@ -282,7 +276,7 @@ namespace LitMotion
         /// <param name="debugName">Debug name</param>
         /// <returns>This builder to allow chaining multiple method calls.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly MotionBuilder<TValue, TOptions, TAdapter> WithDebugName(string debugName)
+        public readonly MotionBuilder<TValue, VValue, TOptions, TAnimationSpec> WithDebugName(string debugName)
         {
 #if LITMOTION_DEBUG
             CheckBuffer();
@@ -384,14 +378,7 @@ namespace LitMotion
             {
                 StartValue = buffer.StartValue,
                 EndValue = buffer.EndValue,
-                Duration = buffer.Duration,
                 Options = buffer.Options,
-                Ease = buffer.Ease,
-                CustomEaseCurve = buffer.AnimationCurve,
-                Delay = buffer.Delay,
-                DelayType = buffer.DelayType,
-                Loops = buffer.Loops,
-                LoopType = buffer.LoopType,
                 CancelOnError = buffer.CancelOnError,
                 SkipValuesDuringDelay = buffer.SkipValuesDuringDelay,
                 ImmediateBind = buffer.ImmediateBind,
@@ -409,11 +396,12 @@ namespace LitMotion
 #if UNITY_EDITOR
                 if (!UnityEditor.EditorApplication.isPlaying)
                 {
-                    handle = EditorMotionDispatcher.Schedule(ref this);
+                    // Use default scheduler interface to avoid generic parameter inference issues
+                    handle = MotionScheduler.DefaultScheduler.Schedule<TValue, VValue, TOptions, TAnimationSpec>(ref this);
                 }
                 else if (MotionScheduler.DefaultScheduler == MotionScheduler.Update) // avoid virtual method call
                 {
-                    handle = MotionDispatcher.Schedule(ref this, PlayerLoopTiming.Update);
+                    handle = MotionScheduler.Update.Schedule(ref this);
                 }
                 else
                 {
@@ -422,7 +410,7 @@ namespace LitMotion
 #else
                 if (MotionScheduler.DefaultScheduler == MotionScheduler.Update) // avoid virtual method call
                 {
-                    handle = MotionDispatcher.Schedule(ref this, PlayerLoopTiming.Update);
+                    handle = MotionScheduler.Update.Schedule(ref this);
                 }
                 else
                 {

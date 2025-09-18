@@ -11,7 +11,7 @@ namespace LitMotion.Tests.Runtime
         public IEnumerator Test_Create()
 
         {
-            var settings = new MotionSettings<float, NoOptions>
+            var settings = new MotionSettings<float, TweenOption>
             {
                 StartValue = 0f,
                 EndValue = 1f,

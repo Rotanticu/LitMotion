@@ -15,9 +15,9 @@ namespace LitMotion.Extensions
         /// <param name="builder">This builder</param>
         /// <param name="transform"></param>
         /// <returns>Handle of the created motion data.</returns>
-        public static MotionHandle BindToAspect<TOptions, TAdapter>(this MotionBuilder<float, TOptions, TAdapter> builder, Camera camera)
-            where TOptions : unmanaged, IMotionOptions
-            where TAdapter : unmanaged, IMotionAdapter<float, TOptions>
+        public static MotionHandle BindToAspect<TOptions, TAnimationSpec>(this MotionBuilder<float, float, TOptions, TAnimationSpec> builder, Camera camera)
+            where TOptions : unmanaged, ITweenOptions
+            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<float, TOptions>
         {
             Error.IsNull(camera);
             return builder.Bind(camera, static (x, camera) =>
@@ -34,9 +34,9 @@ namespace LitMotion.Extensions
         /// <param name="builder">This builder</param>
         /// <param name="transform"></param>
         /// <returns>Handle of the created motion data.</returns>
-        public static MotionHandle BindToNearClipPlane<TOptions, TAdapter>(this MotionBuilder<float, TOptions, TAdapter> builder, Camera camera)
-            where TOptions : unmanaged, IMotionOptions
-            where TAdapter : unmanaged, IMotionAdapter<float, TOptions>
+        public static MotionHandle BindToNearClipPlane<TOptions, TAnimationSpec>(this MotionBuilder<float, float, TOptions, TAnimationSpec> builder, Camera camera)
+            where TOptions : unmanaged, ITweenOptions
+            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<float, TOptions>
         {
             Error.IsNull(camera);
             return builder.Bind(camera, static (x, camera) =>
@@ -53,9 +53,9 @@ namespace LitMotion.Extensions
         /// <param name="builder">This builder</param>
         /// <param name="transform"></param>
         /// <returns>Handle of the created motion data.</returns>
-        public static MotionHandle BindToFarClipPlane<TOptions, TAdapter>(this MotionBuilder<float, TOptions, TAdapter> builder, Camera camera)
-            where TOptions : unmanaged, IMotionOptions
-            where TAdapter : unmanaged, IMotionAdapter<float, TOptions>
+        public static MotionHandle BindToFarClipPlane<TOptions, TAnimationSpec>(this MotionBuilder<float, float, TOptions, TAnimationSpec> builder, Camera camera)
+            where TOptions : unmanaged, ITweenOptions
+            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<float, TOptions>
         {
             Error.IsNull(camera);
             return builder.Bind(camera, static (x, camera) =>
@@ -72,9 +72,9 @@ namespace LitMotion.Extensions
         /// <param name="builder">This builder</param>
         /// <param name="transform"></param>
         /// <returns>Handle of the created motion data.</returns>
-        public static MotionHandle BindToFieldOfView<TOptions, TAdapter>(this MotionBuilder<float, TOptions, TAdapter> builder, Camera camera)
-            where TOptions : unmanaged, IMotionOptions
-            where TAdapter : unmanaged, IMotionAdapter<float, TOptions>
+        public static MotionHandle BindToFieldOfView<TOptions, TAnimationSpec>(this MotionBuilder<float, float, TOptions, TAnimationSpec> builder, Camera camera)
+            where TOptions : unmanaged, ITweenOptions
+            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<float, TOptions>
         {
             Error.IsNull(camera);
             return builder.Bind(camera, static (x, camera) =>
@@ -91,9 +91,9 @@ namespace LitMotion.Extensions
         /// <param name="builder">This builder</param>
         /// <param name="transform"></param>
         /// <returns>Handle of the created motion data.</returns>
-        public static MotionHandle BindToOrthographicSize<TOptions, TAdapter>(this MotionBuilder<float, TOptions, TAdapter> builder, Camera camera)
-            where TOptions : unmanaged, IMotionOptions
-            where TAdapter : unmanaged, IMotionAdapter<float, TOptions>
+        public static MotionHandle BindToOrthographicSize<TOptions, TAnimationSpec>(this MotionBuilder<float, float, TOptions, TAnimationSpec> builder, Camera camera)
+            where TOptions : unmanaged, ITweenOptions
+            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<float, TOptions>
         {
             Error.IsNull(camera);
             return builder.Bind(camera, static (x, camera) =>
@@ -110,9 +110,9 @@ namespace LitMotion.Extensions
         /// <param name="builder">This builder</param>
         /// <param name="transform"></param>
         /// <returns>Handle of the created motion data.</returns>
-        public static MotionHandle BindToRect<TOptions, TAdapter>(this MotionBuilder<Rect, TOptions, TAdapter> builder, Camera camera)
-            where TOptions : unmanaged, IMotionOptions
-            where TAdapter : unmanaged, IMotionAdapter<Rect, TOptions>
+        public static MotionHandle BindToRect<TOptions, TAnimationSpec>(this MotionBuilder<Rect, Rect, TOptions, TAnimationSpec> builder, Camera camera)
+            where TOptions : unmanaged, ITweenOptions
+            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<Rect, TOptions>
         {
             Error.IsNull(camera);
             return builder.Bind(camera, static (x, camera) =>
@@ -129,9 +129,9 @@ namespace LitMotion.Extensions
         /// <param name="builder">This builder</param>
         /// <param name="transform"></param>
         /// <returns>Handle of the created motion data.</returns>
-        public static MotionHandle BindToPixelRect<TOptions, TAdapter>(this MotionBuilder<Rect, TOptions, TAdapter> builder, Camera camera)
-            where TOptions : unmanaged, IMotionOptions
-            where TAdapter : unmanaged, IMotionAdapter<Rect, TOptions>
+        public static MotionHandle BindToPixelRect<TOptions, TAnimationSpec>(this MotionBuilder<Rect, Rect, TOptions, TAnimationSpec> builder, Camera camera)
+            where TOptions : unmanaged, ITweenOptions
+            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<Rect, TOptions>
         {
             Error.IsNull(camera);
             return builder.Bind(camera, static (x, camera) =>
@@ -148,9 +148,9 @@ namespace LitMotion.Extensions
         /// <param name="builder">This builder</param>
         /// <param name="transform"></param>
         /// <returns>Handle of the created motion data.</returns>
-        public static MotionHandle BindToBackgroundColor<TOptions, TAdapter>(this MotionBuilder<Color, TOptions, TAdapter> builder, Camera camera)
-            where TOptions : unmanaged, IMotionOptions
-            where TAdapter : unmanaged, IMotionAdapter<Color, TOptions>
+        public static MotionHandle BindToBackgroundColor<TOptions, TAnimationSpec>(this MotionBuilder<Color, Color, TOptions, TAnimationSpec> builder, Camera camera)
+            where TOptions : unmanaged, ITweenOptions
+            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<Color, TOptions>
         {
             Error.IsNull(camera);
             return builder.Bind(camera, static (x, camera) =>
