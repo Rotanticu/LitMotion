@@ -1,10 +1,8 @@
 using System;
+using System.Diagnostics;
+using Unity.Mathematics;
 namespace LitMotion
 {
-    //https://github.com/orangeduck/Spring-It-On
-    /// <summary>
-    /// �ṩ�����ֵ�����ʵ�ó����ࡣ
-    /// </summary>
     public static class DamperUtility
     {
         /// <summary>
@@ -19,46 +17,34 @@ namespace LitMotion
         /// <param name="stiffness">弹簧刚度（实际上直接作为自然频率使用）</param>
         /// <returns>新的位移值</returns>
         public static float SpringSimple(
-            long timeElapsed,
+            float deltaTime,
             float currentValue,
             float currentVelocity,
             float targetValue,
             out float newVelocity,
-            float dampingRatio = 0.5f,
             float stiffness = 1.0f)
         {
-            // 将stiffness参数重命名为naturalFreq进行内部计算
-            float naturalFreq = stiffness;
+            // SpringSimple是专门为临界阻尼设计的简化版本
+            // 直接使用stiffness作为自然频率，阻尼系数的一半等于自然频率
+            double naturalFreq = stiffness;
             
-            // 参数映射到更有意义的变量名，保持计算逻辑不变
-            double currentPosition = currentValue;
-            double currentVel = currentVelocity;
-            double targetPosition = targetValue;
-            double deltaTime = timeElapsed / 1000.0; // 转换为秒
-            
-            // 从stiffness和dampingRatio计算弹簧物理参数
-            // 保持与原始SpringSimple相同的计算逻辑
-            double halfLife = DampingToHalfLife(2.0 * dampingRatio * naturalFreq); // 从阻尼系数计算半衰期
-            double dampingCoeff = HalfLifeToDamping(halfLife); // 阻尼系数
-            double dampingHalf = dampingCoeff / 2.0d; // 阻尼系数的一半
+            // 临界阻尼的计算逻辑
+            double displacementFromTarget = currentValue - targetValue;  // 当前位置与目标的位移差
+            double velocityWithDamping = currentVelocity + displacementFromTarget * naturalFreq;  // 考虑阻尼的初始速度
+            double exponentialDecay = FastNegExp(naturalFreq * deltaTime); // 指数衰减因子
 
-            // 临界阻尼计算（SpringSimple只支持临界阻尼）
-            double initialDisplacement = currentPosition - targetPosition;
-            double initialVelocityWithDamping = currentVel + initialDisplacement * dampingHalf;
-            double exponentialDecay = FastNegExp(dampingHalf * deltaTime);
+            // 临界阻尼的更新公式
+            double newPosition = exponentialDecay * (displacementFromTarget + velocityWithDamping * deltaTime) + targetValue;  // 新位置
+            double newVel = exponentialDecay * (currentVelocity - velocityWithDamping * naturalFreq * deltaTime);    // 新速度
 
-            // 更新位置和速度
-            currentPosition = exponentialDecay * (initialDisplacement + initialVelocityWithDamping * deltaTime) + targetPosition;
-            currentVel = exponentialDecay * (currentVel - initialVelocityWithDamping * dampingHalf * deltaTime);
-
-            newVelocity = (float)currentVel;
-            return (float)currentPosition;
+            newVelocity = (float)newVel;
+            return (float)newPosition;
         }
 
         /// <summary>
         /// 近似弹性弹簧阻尼器，有过阻尼和欠阻尼和临界阻尼，采用高性能近似算法
         /// </summary>
-        /// <param name="timeElapsed">经过时间（毫秒）</param>
+        /// <param name="deltaTime">时间步长（秒）</param>
         /// <param name="currentValue">当前值</param>
         /// <param name="currentVelocity">当前速度</param>
         /// <param name="targetValue">目标值</param>
@@ -69,7 +55,7 @@ namespace LitMotion
         /// <param name="precision">计算精度容差</param>
         /// <returns>新的位移值</returns>
         public static float SpringElastic(
-            long timeElapsed,
+            float deltaTime,
             float currentValue,
             float currentVelocity,
             float targetValue,
@@ -79,72 +65,56 @@ namespace LitMotion
             float stiffness = 1.0f,
             float precision = 1e-5f)
         {
-            // 将stiffness参数重命名为naturalFreq进行内部计算
-            float naturalFreq = stiffness;
-            
+            // 使用有意义的变量名，提高代码可读性
             double currentPosition = currentValue;
             double currentVel = currentVelocity;
             double targetPosition = targetValue;
             double targetVel = targetVelocity;
-            double deltaTime = timeElapsed / 1000.0; // 转换为秒
-            
-            // 从stiffness和dampingRatio计算弹簧物理参数
-            // 保持与原始SpringElastic相同的计算逻辑
-            double halfLife = DampingToHalfLife(2.0 * dampingRatio * naturalFreq); // 从阻尼系数计算半衰期
-            double dampingCoeff = HalfLifeToDamping(halfLife); // 阻尼系数
-            double stiffnessValue = DampingRatioToStiffness(dampingRatio, dampingCoeff); // 刚度值
-            
-            // 计算调整后的目标位置，支持连续运动
+            // 将stiffness参数重命名为naturalFreq进行内部计算
+            double naturalFreq = stiffness;
+            double stiffnessValue = naturalFreq * naturalFreq;  // 刚度值 = naturalFreq²
+            double dampingHalf = dampingRatio * naturalFreq;
+            double dampingCoeff = 2.0 * dampingHalf;  // 阻尼系数 = 2 * 阻尼比 * naturalFreq
             double adjustedTargetPosition = targetPosition + (dampingCoeff * targetVel) / (stiffnessValue + precision);
-            double dampingHalf = dampingCoeff / 2.0f; // 阻尼系数的一半
 
-            if (Math.Abs(stiffnessValue - (dampingCoeff * dampingCoeff) / 4.0f) < precision)
+            if (Math.Abs(stiffnessValue - (dampingCoeff * dampingCoeff) / 4.0f) < precision) // Critically Damped
             {
-                // 临界阻尼：计算初始条件系数
                 double initialDisplacement = currentPosition - adjustedTargetPosition;
                 double initialVelocityWithDamping = currentVel + initialDisplacement * dampingHalf;
 
                 double exponentialDecay = FastNegExp(dampingHalf * deltaTime);
 
-                // 更新位置和速度
                 currentPosition = initialDisplacement * exponentialDecay + deltaTime * initialVelocityWithDamping * exponentialDecay + adjustedTargetPosition;
                 currentVel = -dampingHalf * initialDisplacement * exponentialDecay - dampingHalf * deltaTime * initialVelocityWithDamping * exponentialDecay + initialVelocityWithDamping * exponentialDecay;
             }
-            else if (stiffnessValue - (dampingCoeff * dampingCoeff) / 4.0f > 0.0)
+            else if (stiffnessValue - (dampingCoeff * dampingCoeff) / 4.0f > 0.0) // Under Damped
             {
-                // 欠阻尼：计算振荡频率和振幅
                 double dampedFrequency = Math.Sqrt(stiffnessValue - (dampingCoeff * dampingCoeff) / 4.0f);
                 double displacementFromTarget = currentPosition - adjustedTargetPosition;
-                
-                // 计算振幅和相位
-                double amplitude = Math.Sqrt(Square(currentVel + dampingHalf * displacementFromTarget) / (dampedFrequency * dampedFrequency + precision) + Square(displacementFromTarget));
-                double phase = Math.Atan((currentVel + displacementFromTarget * dampingHalf) / (-displacementFromTarget * dampedFrequency + precision));
+                double amplitude = Math.Sqrt(FastSquare(currentVel + dampingHalf * displacementFromTarget) / (dampedFrequency * dampedFrequency + precision) + FastSquare(displacementFromTarget));
+                double phase = FastAtan((currentVel + displacementFromTarget * dampingHalf) / (-displacementFromTarget * dampedFrequency + precision));
 
-                // 根据位移方向确定振幅符号
                 amplitude = displacementFromTarget > 0.0f ? amplitude : -amplitude;
 
                 double exponentialDecay = FastNegExp(dampingHalf * deltaTime);
 
-                // 更新位置和速度（振荡运动）
                 currentPosition = amplitude * exponentialDecay * Math.Cos(dampedFrequency * deltaTime + phase) + adjustedTargetPosition;
-                currentVel = -dampingHalf * amplitude * exponentialDecay * Math.Cos(dampedFrequency * deltaTime + phase) - 
-                            dampedFrequency * amplitude * exponentialDecay * Math.Sin(dampedFrequency * deltaTime + phase);
+                currentVel = -dampingHalf * amplitude * exponentialDecay * Math.Cos(dampedFrequency * deltaTime + phase) - dampedFrequency * amplitude * exponentialDecay * Math.Sin(dampedFrequency * deltaTime + phase);
             }
-            else if (stiffnessValue - (dampingCoeff * dampingCoeff) / 4.0f < 0.0)
+            else if (stiffnessValue - (dampingCoeff * dampingCoeff) / 4.0f < 0.0) // Over Damped
             {
-                // 过阻尼：计算两个衰减指数
                 double fastDecayRate = (dampingCoeff + Math.Sqrt(dampingCoeff * dampingCoeff - 4 * stiffnessValue)) / 2.0f;
                 double slowDecayRate = (dampingCoeff - Math.Sqrt(dampingCoeff * dampingCoeff - 4 * stiffnessValue)) / 2.0f;
-                // 计算系数
-                double fastCoeff = (adjustedTargetPosition * fastDecayRate - currentPosition * fastDecayRate - currentVel) / (slowDecayRate - fastDecayRate);
-                double slowCoeff = currentPosition - fastCoeff - adjustedTargetPosition;
+                // 计算过阻尼系数：fastDecayCoeff对应fastDecayRate，slowDecayCoeff对应slowDecayRate
+                double fastDecayCoeff = (adjustedTargetPosition * fastDecayRate - currentPosition * fastDecayRate - currentVel) / (slowDecayRate - fastDecayRate);
+                double slowDecayCoeff = currentPosition - fastDecayCoeff - adjustedTargetPosition;
 
                 double fastExponentialDecay = FastNegExp(fastDecayRate * deltaTime);
                 double slowExponentialDecay = FastNegExp(slowDecayRate * deltaTime);
 
-                // 更新位置和速度（过阻尼运动）
-                currentPosition = slowCoeff * slowExponentialDecay + fastCoeff * fastExponentialDecay + adjustedTargetPosition;
-                currentVel = -slowDecayRate * slowCoeff * slowExponentialDecay - fastDecayRate * fastCoeff * fastExponentialDecay;
+                // 过阻尼位置更新：slowDecayCoeff用fastExponentialDecay，fastDecayCoeff用slowExponentialDecay
+                currentPosition = slowDecayCoeff * fastExponentialDecay + fastDecayCoeff * slowExponentialDecay + adjustedTargetPosition;
+                currentVel = -fastDecayRate * slowDecayCoeff * fastExponentialDecay - slowDecayRate * fastDecayCoeff * slowExponentialDecay;
             }
 
             newVelocity = (float)currentVel;
@@ -164,7 +134,7 @@ namespace LitMotion
         /// <param name="precision">计算精度容差</param>
         /// <returns>新的位移值</returns>
         public static float SpringPrecise(
-            long timeElapsed,
+            float deltaTime,
             float currentValue,
             float currentVelocity,
             float targetValue,
@@ -190,7 +160,6 @@ namespace LitMotion
             }
             
             float adjustedDisplacement = currentValue - adjustedTargetPosition;
-            double deltaT = timeElapsed / 1000.0; // 转换为秒
             double dampingRatioSquared = dampingRatio * dampingRatio;
             double r = -dampingRatio * naturalFreq;
 
@@ -207,18 +176,18 @@ namespace LitMotion
                 // 过阻尼计算
                 double coeffB = (gammaMinus * adjustedDisplacement - currentVelocity) / (gammaMinus - gammaPlus);
                 double coeffA = adjustedDisplacement - coeffB;
-                displacement = coeffA * Math.Exp(gammaMinus * deltaT) + coeffB * Math.Exp(gammaPlus * deltaT);
-                calculatedVelocity = coeffA * gammaMinus * Math.Exp(gammaMinus * deltaT) +
-                                    coeffB * gammaPlus * Math.Exp(gammaPlus * deltaT);
+                displacement = coeffA * Math.Exp(gammaMinus * deltaTime) + coeffB * Math.Exp(gammaPlus * deltaTime);
+                calculatedVelocity = coeffA * gammaMinus * Math.Exp(gammaMinus * deltaTime) +
+                                    coeffB * gammaPlus * Math.Exp(gammaPlus * deltaTime);
             }
             else if (Math.Abs(dampingRatio - 1.0f) < precision)
             {
                 // 临界阻尼
                 double coeffA = adjustedDisplacement;
                 double coeffB = currentVelocity + naturalFreq * adjustedDisplacement;
-                double nFdT = -naturalFreq * deltaT;
-                displacement = (coeffA + coeffB * deltaT) * Math.Exp(nFdT);
-                calculatedVelocity = ((coeffA + coeffB * deltaT) * Math.Exp(nFdT) * (-naturalFreq)) + 
+                double nFdT = -naturalFreq * deltaTime;
+                displacement = (coeffA + coeffB * deltaTime) * Math.Exp(nFdT);
+                calculatedVelocity = ((coeffA + coeffB * deltaTime) * Math.Exp(nFdT) * (-naturalFreq)) +
                                     coeffB * Math.Exp(nFdT);
             }
             else
@@ -227,17 +196,16 @@ namespace LitMotion
                 double dampedFreq = naturalFreq * Math.Sqrt(1 - dampingRatioSquared);
                 double cosCoeff = adjustedDisplacement;
                 double sinCoeff = (1.0 / dampedFreq) * ((-r * adjustedDisplacement) + currentVelocity);
-                double dFdT = dampedFreq * deltaT;
-                displacement = Math.Exp(r * deltaT) * (cosCoeff * Math.Cos(dFdT) + sinCoeff * Math.Sin(dFdT));
+                double dFdT = dampedFreq * deltaTime;
+                displacement = Math.Exp(r * deltaTime) * (cosCoeff * Math.Cos(dFdT) + sinCoeff * Math.Sin(dFdT));
                 calculatedVelocity = displacement * r +
-                                    (Math.Exp(r * deltaT) *
-                                     ((-dampedFreq * cosCoeff * Math.Sin(dFdT) + 
+                                    (Math.Exp(r * deltaTime) *
+                                     ((-dampedFreq * cosCoeff * Math.Sin(dFdT) +
                                        dampedFreq * sinCoeff * Math.Cos(dFdT))));
             }
 
             float newValue = (float)(displacement + adjustedTargetPosition);
             newVelocity = (float)calculatedVelocity;
-
             return newValue;
         }
         /// <summary>
@@ -249,47 +217,39 @@ namespace LitMotion
         /// <param name="targetValue">目标值</param>
         /// <param name="newVelocity">输出新的速度</param>
         /// <param name="intermediatePosition">中间位置（用于维护状态）</param>
-        /// <param name="targetVelocity">目标速度（到达目标位置时的期望速度）</param>
+        /// <param name="smothingVelocity">平滑速度（需要平滑的线性速度）</param>
         /// <param name="dampingRatio">阻尼比</param>
         /// <param name="stiffness">弹簧刚度（实际上直接作为自然频率使用）</param>
-        /// <param name="anticipation">预期系数，用于预测未来目标位置</param>
         /// <returns>新的位移值</returns>
         public static float SpringSimpleVelocitySmoothing(
-            long timeElapsed,
+            float deltaTime,
             float currentValue,
             float currentVelocity,
             float targetValue,
             out float newVelocity,
             ref float intermediatePosition,
-            float targetVelocity = 0.0f,
-            float dampingRatio = 0.5f,
-            float stiffness = 1.0f,
-            float anticipation = 2.0f)
+            float smothingVelocity = 2f,
+            float stiffness = 1.0f)
         {
-            // 将stiffness参数重命名为naturalFreq进行内部计算
+            // 按照原始版本的设计，直接使用stiffness作为自然频率
             float naturalFreq = stiffness;
-
-            // 从stiffness和dampingRatio计算弹簧物理参数
-            double halfLife = DampingToHalfLife(2.0 * dampingRatio * naturalFreq);
-            double dampingCoeff = HalfLifeToDamping(halfLife);
-            double dampingHalf = dampingCoeff / 2.0d;
-
+            
             // 计算速度方向
-            float velocityDirection = (float)((targetValue - intermediatePosition) > 0.0d ? 1.0d : -1.0d) * targetVelocity;
+            float velocityDirection = ((targetValue - intermediatePosition) > 0.0f ? 1.0f : -1.0f) * smothingVelocity;
 
             // 计算预期时间
-            float anticipatedTime = timeElapsed / 1000.0f + anticipation * (float)halfLife;
+            float anticipatedTime = 1 / naturalFreq;
             
             // 计算未来目标位置
-            float futureTargetPosition = Math.Abs(targetValue - intermediatePosition) > anticipatedTime * targetVelocity ?
+            float futureTargetPosition = Math.Abs(targetValue - intermediatePosition) > anticipatedTime * smothingVelocity ?
                 intermediatePosition + velocityDirection * anticipatedTime : targetValue;
 
             // 直接调用SpringSimple函数
-            float result = SpringSimple(timeElapsed, currentValue, currentVelocity, futureTargetPosition, out newVelocity, dampingRatio, stiffness);
+            float result = SpringSimple(deltaTime, currentValue, currentVelocity, futureTargetPosition, out newVelocity, stiffness);
 
             // 更新中间位置
-            intermediatePosition = Math.Abs(targetValue - intermediatePosition) > timeElapsed / 1000.0f * targetVelocity ? 
-                intermediatePosition + velocityDirection * timeElapsed / 1000.0f : targetValue;
+            intermediatePosition = Math.Abs(targetValue - intermediatePosition) > deltaTime * smothingVelocity ? 
+                intermediatePosition + velocityDirection * deltaTime : targetValue;
 
             return result;
         }
@@ -309,43 +269,37 @@ namespace LitMotion
         /// <param name="anticipation">预期系数，用于预测未来目标位置</param>
         /// <returns>新的位移值</returns>
         public static float SpringSimpleDurationLimit(
-            long timeElapsed,
+            float deltaTime,
             float currentValue,
             float currentVelocity,
             float targetValue,
             out float newVelocity,
             ref float intermediatePosition,
-            float durationMillisecond = 200.0f,
-            float dampingRatio = 0.5f,
-            float stiffness = 1.0f,
-            float anticipation = 2.0f)
+            float durationSeconds = 0.2f,
+            float stiffness = 1.0f)
         {
-            // 将stiffness参数重命名为naturalFreq进行内部计算
+            // 按照原始版本的设计，直接使用stiffness作为自然频率
             float naturalFreq = stiffness;
-
-            // 从stiffness和dampingRatio计算弹簧物理参数
-            double halfLife = DampingToHalfLife(2.0 * dampingRatio * naturalFreq);
-            double dampingCoeff = HalfLifeToDamping(halfLife);
-            double dampingHalf = dampingCoeff / 2.0d;
-
-            // 计算最小时间（转换为秒）
-            float minTimeSeconds = (durationMillisecond > timeElapsed ? durationMillisecond : timeElapsed) / 1000.0f;
-
-            // 基于中间位置计算目标速度
-            float targetVel = (targetValue - intermediatePosition) / minTimeSeconds;
-
-            // 计算预期时间
-            float anticipatedTime = timeElapsed / 1000.0f + anticipation * (float)halfLife;
+            float tGoal = durationSeconds;  // 对应原始版本的 t_goal
             
-            // 计算未来目标位置
-            float futureTargetPosition = anticipatedTime < durationMillisecond ?
+            // 计算最小时间，对应原始版本的 min_time = t_goal > dt ? t_goal : dt
+            float minTime = tGoal > deltaTime ? tGoal : deltaTime;
+            
+            // 基于中间位置计算目标速度，对应原始版本的 v_goal = (x_goal - xi) / min_time
+            float targetVel = (targetValue - intermediatePosition) / minTime;
+
+            // 计算预期时间，对应原始版本的 t_goal_future = halflife_to_lag(halflife)
+            float anticipatedTime = 1 / naturalFreq;  // 对应 halflife_to_lag(halflife)
+            
+            // 计算未来目标位置，对应原始版本的 x_goal_future
+            float futureTargetPosition = anticipatedTime < tGoal ?
                 intermediatePosition + targetVel * anticipatedTime : targetValue;
 
-            // 直接调用SpringSimple函数
-            float result = SpringSimple(timeElapsed, currentValue, currentVelocity, futureTargetPosition, out newVelocity, dampingRatio, stiffness);
+            // 直接调用SpringSimple函数，对应原始版本的 simple_spring_damper_exact
+            float result = SpringSimple(deltaTime, currentValue, currentVelocity, futureTargetPosition, out newVelocity, stiffness);
 
-            // 更新中间位置
-            intermediatePosition += targetVel * timeElapsed / 1000.0f;
+            // 更新中间位置，对应原始版本的 xi += v_goal * dt
+            intermediatePosition += targetVel * deltaTime;
 
             return result;
         }
@@ -364,21 +318,24 @@ namespace LitMotion
         /// <param name="stiffness">弹簧刚度（实际上直接作为自然频率使用）</param>
         /// <returns>新的位移值</returns>
         public static float SpringSimpleDoubleSmoothing(
-            long timeElapsed,
+            float deltaTime,
             float currentValue,
             float currentVelocity,
             float targetValue,
             out float newVelocity,
             ref float intermediatePosition,
             ref float intermediateVelocity,
-            float dampingRatio = 0.5f,
             float stiffness = 1.0f)
         {
-            // 第一层弹簧：从中间位置到目标位置
-            float firstLayerResult = SpringSimple(timeElapsed, intermediatePosition, intermediateVelocity, targetValue, out intermediateVelocity, dampingRatio, stiffness);
+            float doubleStiffness = 2.0f * stiffness;
+            
+            // 第一层弹簧：从中间位置到目标位置，对应原始版本的 simple_spring_damper_exact(xi, vi, x_goal, 0.5f * halflife, dt)
+            // 直接修改intermediatePosition和intermediateVelocity
+            intermediatePosition = SpringSimple(deltaTime, intermediatePosition, intermediateVelocity, targetValue, out intermediateVelocity, doubleStiffness);
 
-            // 第二层弹簧：从当前位置到中间位置
-            return SpringSimple(timeElapsed, currentValue, currentVelocity, firstLayerResult, out newVelocity, dampingRatio, stiffness);
+            // 第二层弹簧：从当前位置到中间位置，对应原始版本的 simple_spring_damper_exact(x, v, xi, 0.5f * halflife, dt)
+            // 使用修改后的intermediatePosition作为目标
+            return SpringSimple(deltaTime, currentValue, currentVelocity, intermediatePosition, out newVelocity, doubleStiffness);
         }
 
         private static double HalfLifeToDamping(double halfLife, double eps = 1e-5f)
@@ -406,12 +363,50 @@ namespace LitMotion
             return Square(2.0d * Math.PI * frequency);
         }
 
+        /// <summary>
+        /// 将半衰期转换为自然频率（临界阻尼）
+        /// </summary>
+        /// <param name="halflife">半衰期（秒）</param>
+        /// <returns>自然频率（rad/s）</returns>
+        private static float HalflifeToNaturalFreq(float halflife)
+        {
+            return 0.69314718056f / halflife;  // ω₀ = ln(2) / τ₁/₂
+        }
+
+        /// <summary>
+        /// 将自然频率转换为半衰期（临界阻尼）
+        /// </summary>
+        /// <param name="naturalFreq">自然频率（rad/s）</param>
+        /// <returns>半衰期（秒）</returns>
+        private static float NaturalFreqToHalflife(float naturalFreq)
+        {   
+            return 0.69314718056f / naturalFreq;  // τ₁/₂ = ln(2) / ω₀
+        }
         private static double FastNegExp(double x)
         {
             return 1.0d / (1.0d + x + 0.48d * x * x + 0.235d * x * x * x);
         }
 
         private static double Square(double x)
+        {
+            return x * x;
+        }
+
+        /// <summary>
+        /// 快速反正切函数近似，比Math.Atan快2-5倍，精度损失很小
+        /// </summary>
+        private static double FastAtan(double x)
+        {
+            double z = Math.Abs(x);
+            double w = z > 1.0 ? 1.0 / z : z;
+            double y = (Math.PI / 4.0) * w - w * (w - 1) * (0.2447 + 0.0663 * w);
+            return Math.Sign(x) * (z > 1.0 ? Math.PI / 2.0 - y : y);
+        }
+
+        /// <summary>
+        /// 快速平方函数，与直接乘法性能相同
+        /// </summary>
+        private static double FastSquare(double x)
         {
             return x * x;
         }
