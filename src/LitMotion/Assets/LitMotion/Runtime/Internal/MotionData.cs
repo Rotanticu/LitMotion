@@ -224,7 +224,7 @@ namespace LitMotion
         public TValue EndValue;
         public TOptions Options;
 
-        public void Update<TAdapter>(double time, out TValue result)
+        public void Update<TAdapter>(double time, double deltaTime, out TValue result)
             where TAdapter : unmanaged, IMotionAdapter<TValue, TOptions>
         {
             Core.Update(time, out var progress);
@@ -233,6 +233,7 @@ namespace LitMotion
             {
                 Progress = progress,
                 Time = time,
+                DeltaTime = deltaTime,
             });
         }
 
