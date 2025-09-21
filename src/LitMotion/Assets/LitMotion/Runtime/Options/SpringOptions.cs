@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace LitMotion
 {
@@ -8,10 +9,8 @@ namespace LitMotion
     [Serializable]
     public struct SpringOptions : IEquatable<SpringOptions>, IMotionOptions
     {
-        public float CurrentValue;
-        public float CurrentVelocity;
-        public float TargetValue;
-        public float TargetVelocity;
+        public Vector4 CurrentVelocity;
+        public Vector4 TargetVelocity;
         public float Stiffness;
         public float DampingRatio;
 
@@ -23,10 +22,8 @@ namespace LitMotion
                 {
                     Stiffness = 10.0f,
                     DampingRatio = 1.0f,
-                    TargetVelocity = 0.0f,
-                    CurrentValue = 0.0f,
-                    CurrentVelocity = 0.0f,
-                    TargetValue = 1.0f
+                    CurrentVelocity = new Vector4(0.0f, 0.0f, 0.0f, 0.0f),
+                    TargetVelocity = new Vector4(1.0f, 0.0f, 0.0f, 0.0f)
                 };
             }   
         }
@@ -39,10 +36,8 @@ namespace LitMotion
                 {
                     Stiffness = 10.0f,
                     DampingRatio = 1.2f,
-                    TargetVelocity = 0.0f,
-                    CurrentValue = 0.0f,
-                    CurrentVelocity = 0.0f,
-                    TargetValue = 1.0f
+                    CurrentVelocity = new Vector4(0.0f, 0.0f, 0.0f, 0.0f),
+                    TargetVelocity = new Vector4(1.0f, 0.0f, 0.0f, 0.0f)
                 };
             }
         }   
@@ -55,10 +50,8 @@ namespace LitMotion
                 {
                     Stiffness = 10.0f,
                     DampingRatio = 0.6f,
-                    TargetVelocity = 0.0f,
-                    CurrentValue = 0.0f,
-                    CurrentVelocity = 0.0f,
-                    TargetValue = 1.0f
+                    CurrentVelocity = new Vector4(0.0f, 0.0f, 0.0f, 0.0f),
+                    TargetVelocity = new Vector4(1.0f, 0.0f, 0.0f, 0.0f)
                 };
             }
         }
@@ -68,9 +61,8 @@ namespace LitMotion
             return Stiffness == other.Stiffness &&
                    DampingRatio == other.DampingRatio &&
                    TargetVelocity == other.TargetVelocity &&
-                   CurrentValue == other.CurrentValue &&
                    CurrentVelocity == other.CurrentVelocity &&
-                   TargetValue == other.TargetValue;
+                   TargetVelocity == other.TargetVelocity;
         }
 
         public override readonly bool Equals(object obj)
@@ -81,7 +73,7 @@ namespace LitMotion
 
         public override readonly int GetHashCode()
         {
-            return HashCode.Combine(Stiffness, DampingRatio, TargetVelocity, CurrentValue, CurrentVelocity, TargetValue);
+            return HashCode.Combine(Stiffness, DampingRatio, TargetVelocity, CurrentVelocity, TargetVelocity);
         }
     }
 }

@@ -1,5 +1,7 @@
 using System;
 using Unity.Burst;
+using Unity.Mathematics;
+using UnityEngine;
 using static Unity.Mathematics.math;
 namespace LitMotion
 {
@@ -342,6 +344,261 @@ namespace LitMotion
             return SpringSimple(deltaTime, currentValue, currentVelocity, intermediatePosition, out newVelocity, doubleStiffness);
         }
 
+#region float4版本的Spring函数
+        
+        /// <summary>
+        /// 简易弹簧阻尼器，只有临界阻尼，没有过阻尼和欠阻尼
+        /// </summary>
+        /// <param name="timeElapsed">经过时间（毫秒）</param>
+        /// <param name="currentValue">当前值</param>
+        /// <param name="currentVelocity">当前速度</param>
+        /// <param name="targetValue">目标值</param>
+        /// <param name="newVelocity">输出新的速度</param>
+        /// <param name="dampingRatio">阻尼比</param>
+        /// <param name="stiffness">弹簧刚度（实际上直接作为自然频率使用）</param>
+        /// <returns>新的位移值</returns>
+        public static float4 SpringSimple(
+            float deltaTime,
+            float4 currentValue,
+            float4 currentVelocity,
+            float4 targetValue,
+            out float4 newVelocity,
+            float stiffness = 1.0f)
+        {
+            // SpringSimple是专门为临界阻尼设计的简化版本
+            // 直接使用stiffness作为自然频率，阻尼系数的一半等于自然频率
+            float naturalFreq = stiffness;
+
+            // 临界阻尼的计算逻辑
+            float4 displacementFromTarget = currentValue - targetValue;  // 当前位置与目标的位移差
+            float4 velocityWithDamping = currentVelocity + displacementFromTarget * naturalFreq;  // 考虑阻尼的初始速度
+            float4 exponentialDecay = (float4)FastNegExp(naturalFreq * deltaTime); // 指数衰减因子
+
+            // 临界阻尼的更新公式
+            float4 newPosition = exponentialDecay * (displacementFromTarget + velocityWithDamping * deltaTime) + targetValue;  // 新位置
+            float4 newVel = exponentialDecay * (currentVelocity - velocityWithDamping * naturalFreq * deltaTime);    // 新速度
+
+            newVelocity = newVel;
+            return newPosition;
+        }
+
+        /// <summary>
+        /// 近似弹性弹簧阻尼器，float4版本，有过阻尼和欠阻尼和临界阻尼，采用高性能近似算法
+        /// </summary>
+        /// <param name="deltaTime">时间步长（秒）</param>
+        /// <param name="currentValue">当前值</param>
+        /// <param name="currentVelocity">当前速度</param>
+        /// <param name="targetValue">目标值</param>
+        /// <param name="newVelocity">输出新的速度</param>
+        /// <param name="targetVelocity">目标速度（到达目标位置时的期望速度）</param>
+        /// <param name="dampingRatio">阻尼比 0.6 = Q弹 1 = 临界 1.2 = 稍缓</param>
+        /// <param name="stiffness">弹簧刚度（实际上直接作为自然频率使用）5 = 1秒 10 = 0.5秒 16.5 = 0.2秒 </param>
+        /// <param name="precision">计算精度容差</param>
+        /// <returns>新的位移值</returns>
+        public static float4 SpringElastic(
+            float deltaTime,
+            float4 currentValue,
+            float4 currentVelocity,
+            float4 targetValue,
+            out float4 newVelocity,
+            float4 targetVelocity = default,
+            float dampingRatio = 0.5f,
+            float stiffness = 1.0f,
+            float precision = 1e-5f)
+        {
+            // 使用有意义的变量名，提高代码可读性
+            float4 currentPosition = currentValue;
+            float4 currentVel = currentVelocity;
+            float4 targetPosition = targetValue;
+            float4 targetVel = targetVelocity;
+            // 将stiffness参数重命名为naturalFreq进行内部计算
+            float naturalFreq = stiffness;
+            float stiffnessValue = naturalFreq * naturalFreq;  // 刚度值 = naturalFreq²
+            float dampingHalf = dampingRatio * naturalFreq;
+            float dampingCoeff = 2.0f * dampingHalf;  // 阻尼系数 = 2 * 阻尼比 * naturalFreq
+            float4 adjustedTargetPosition = targetPosition + (dampingCoeff * targetVel) / (stiffnessValue + precision);
+
+            if (math.abs(stiffnessValue - (dampingCoeff * dampingCoeff) / 4.0f) < precision) // Critically Damped
+            {
+                float4 initialDisplacement = currentPosition - adjustedTargetPosition;
+                float4 initialVelocityWithDamping = currentVel + initialDisplacement * dampingHalf;
+
+                float exponentialDecay = (float)FastNegExp((double)(dampingHalf * deltaTime));
+
+                currentPosition = initialDisplacement * exponentialDecay + deltaTime * initialVelocityWithDamping * exponentialDecay + adjustedTargetPosition;
+                currentVel = -dampingHalf * initialDisplacement * exponentialDecay - dampingHalf * deltaTime * initialVelocityWithDamping * exponentialDecay + initialVelocityWithDamping * exponentialDecay;
+            }
+            else if (stiffnessValue - (dampingCoeff * dampingCoeff) / 4.0f > 0.0f) // Under Damped
+            {
+                float dampedFrequency = math.sqrt(stiffnessValue - (dampingCoeff * dampingCoeff) / 4.0f);
+                float4 displacementFromTarget = currentPosition - adjustedTargetPosition;
+                float4 amplitude = math.sqrt(Square(currentVel + dampingHalf * displacementFromTarget) / (dampedFrequency * dampedFrequency + precision) + Square(displacementFromTarget));
+                float4 phase = FastAtan((currentVel + displacementFromTarget * dampingHalf) / (-displacementFromTarget * dampedFrequency + precision));
+
+                amplitude = math.select(-amplitude, amplitude, displacementFromTarget > 0.0f);
+
+                float exponentialDecay = (float)FastNegExp((double)(dampingHalf * deltaTime));
+
+                currentPosition = amplitude * exponentialDecay * math.cos(dampedFrequency * deltaTime + phase) + adjustedTargetPosition;
+                currentVel = -dampingHalf * amplitude * exponentialDecay * math.cos(dampedFrequency * deltaTime + phase) - dampedFrequency * amplitude * exponentialDecay * math.sin(dampedFrequency * deltaTime + phase);
+            }
+            else if (stiffnessValue - (dampingCoeff * dampingCoeff) / 4.0f < 0.0f) // Over Damped
+            {
+                float fastDecayRate = (dampingCoeff + math.sqrt(dampingCoeff * dampingCoeff - 4f * stiffnessValue)) / 2.0f;
+                float slowDecayRate = (dampingCoeff - math.sqrt(dampingCoeff * dampingCoeff - 4f * stiffnessValue)) / 2.0f;
+                // 计算过阻尼系数：fastDecayCoeff对应fastDecayRate，slowDecayCoeff对应slowDecayRate
+                float4 fastDecayCoeff = (adjustedTargetPosition * fastDecayRate - currentPosition * fastDecayRate - currentVel) / (slowDecayRate - fastDecayRate);
+                float4 slowDecayCoeff = currentPosition - fastDecayCoeff - adjustedTargetPosition;
+
+                float fastExponentialDecay = (float)FastNegExp((double)(fastDecayRate * deltaTime));
+                float slowExponentialDecay = (float)FastNegExp((double)(slowDecayRate * deltaTime));
+
+                // 过阻尼位置更新：slowDecayCoeff用fastExponentialDecay，fastDecayCoeff用slowExponentialDecay
+                currentPosition = slowDecayCoeff * fastExponentialDecay + fastDecayCoeff * slowExponentialDecay + adjustedTargetPosition;
+                currentVel = -fastDecayRate * slowDecayCoeff * fastExponentialDecay - slowDecayRate * fastDecayCoeff * slowExponentialDecay;
+            }
+
+            newVelocity = currentVel;
+            return currentPosition;
+        }
+
+        /// <summary>
+        /// 速度平滑弹簧阻尼器，float4版本，支持指定到达时间
+        /// </summary>
+        /// <param name="deltaTime">时间步长（秒）</param>
+        /// <param name="currentValue">当前值</param>
+        /// <param name="currentVelocity">当前速度</param>
+        /// <param name="targetValue">目标值</param>
+        /// <param name="newVelocity">输出新的速度</param>
+        /// <param name="intermediatePosition">中间位置（用于维护状态）</param>
+        /// <param name="smothingVelocity">平滑速度</param>
+        /// <param name="stiffness">弹簧刚度（实际上直接作为自然频率使用）</param>
+        /// <returns>新的位移值</returns>
+        public static float4 SpringSimpleVelocitySmoothing(
+            float deltaTime,
+            float4 currentValue,
+            float4 currentVelocity,
+            float4 targetValue,
+            out float4 newVelocity,
+            ref float4 intermediatePosition,
+            float smothingVelocity = 2f,
+            float stiffness = 1.0f)
+        {
+            // 按照原始版本的设计，直接使用stiffness作为自然频率
+            float naturalFreq = stiffness;
+            
+            // 计算目标与中间位置的差值
+            float4 targetIntermediateDiff = targetValue - intermediatePosition;
+            float4 absTargetIntermediateDiff = math.abs(targetIntermediateDiff);
+            
+            // 计算速度方向
+            float4 velocityDirection = math.sign(targetIntermediateDiff) * smothingVelocity;
+
+            // 计算预期时间
+            float anticipatedTime = 1f / naturalFreq;
+            
+            // 计算未来目标位置
+            float4 futureTargetPosition = math.select(targetValue, 
+                intermediatePosition + velocityDirection * anticipatedTime, 
+                absTargetIntermediateDiff > anticipatedTime * smothingVelocity);
+
+            // 直接调用SpringSimple函数
+            float4 result = SpringSimple(deltaTime, currentValue, currentVelocity, futureTargetPosition, out newVelocity, stiffness);
+
+            // 更新中间位置
+            intermediatePosition = math.select(targetValue, 
+                intermediatePosition + velocityDirection * deltaTime, 
+                absTargetIntermediateDiff > deltaTime * smothingVelocity);
+
+            return result;
+        }
+
+        /// <summary>
+        /// 时间限制弹簧阻尼器，float4版本，支持指定到达时间
+        /// </summary>
+        /// <param name="deltaTime">时间步长（秒）</param>
+        /// <param name="currentValue">当前值</param>
+        /// <param name="currentVelocity">当前速度</param>
+        /// <param name="targetValue">目标值</param>
+        /// <param name="newVelocity">输出新的速度</param>
+        /// <param name="intermediatePosition">中间位置（用于维护状态）</param>
+        /// <param name="durationSeconds">目标到达时间（秒）</param>
+        /// <param name="stiffness">弹簧刚度（实际上直接作为自然频率使用）</param>
+        /// <returns>新的位移值</returns>
+        public static float4 SpringSimpleDurationLimit(
+            float deltaTime,
+            float4 currentValue,
+            float4 currentVelocity,
+            float4 targetValue,
+            out float4 newVelocity,
+            ref float4 intermediatePosition,
+            float durationSeconds = 0.2f,
+            float stiffness = 1.0f)
+        {
+            // 直接使用stiffness作为自然频率
+            float naturalFreq = stiffness;
+            float tGoal = durationSeconds;
+            
+            // 计算最小时间
+            float minTime = math.max(tGoal, deltaTime);
+            
+            // 基于中间位置计算目标速度
+            float4 targetVel = (targetValue - intermediatePosition) / minTime;
+
+            // 计算预期时间
+            float anticipatedTime = 1f / naturalFreq;
+            
+            // 计算未来目标位置
+            float4 futureTargetPosition = math.select(targetValue,
+                intermediatePosition + targetVel * anticipatedTime, 
+                anticipatedTime < tGoal);
+
+            // 直接调用SpringSimple函数
+            float4 result = SpringSimple(deltaTime, currentValue, currentVelocity, futureTargetPosition, out newVelocity, stiffness);
+
+            // 更新中间位置
+            intermediatePosition += targetVel * deltaTime;
+
+            return result;
+        }
+
+        /// <summary>
+        /// 双重平滑弹簧阻尼器，float4版本，使用两个串联的弹簧系统实现更平滑的运动
+        /// </summary>
+        /// <param name="deltaTime">时间步长（秒）</param>
+        /// <param name="currentValue">当前值</param>
+        /// <param name="currentVelocity">当前速度</param>
+        /// <param name="targetValue">目标值</param>
+        /// <param name="newVelocity">输出新的速度</param>
+        /// <param name="intermediatePosition">中间位置（用于维护状态）</param>
+        /// <param name="intermediateVelocity">中间速度（用于维护状态）</param>
+        /// <param name="stiffness">弹簧刚度（实际上直接作为自然频率使用）</param>
+        /// <returns>新的位移值</returns>
+        public static float4 SpringSimpleDoubleSmoothing(
+            float deltaTime,
+            float4 currentValue,
+            float4 currentVelocity,
+            float4 targetValue,
+            out float4 newVelocity,
+            ref float4 intermediatePosition,
+            ref float4 intermediateVelocity,
+            float stiffness = 1.0f)
+        {
+            float doubleStiffness = 2.0f * stiffness;
+            
+            // 第一层弹簧：从中间位置到目标位置
+            // 直接修改intermediatePosition和intermediateVelocity
+            intermediatePosition = SpringSimple(deltaTime, intermediatePosition, intermediateVelocity, targetValue, out intermediateVelocity, doubleStiffness);
+
+            // 第二层弹簧：从当前位置到中间位置
+            // 使用修改后的intermediatePosition作为目标
+            return SpringSimple(deltaTime, currentValue, currentVelocity, intermediatePosition, out newVelocity, doubleStiffness);
+        }
+
+        #endregion
+
+
+
         private static double HalfLifeToDamping(double halfLife, double eps = 1e-5d)
         {
             return (4.0d * 0.6931471805599453d) / (halfLife + eps);
@@ -396,6 +653,11 @@ namespace LitMotion
             return x * x;
         }
 
+        private static float4 Square(float4 x)
+        {
+            return x * x;
+        }
+
         /// <summary>
         /// 快速反正切函数近似，比Math.Atan快2-5倍，精度损失很小
         /// </summary>
@@ -405,6 +667,17 @@ namespace LitMotion
             double w = z > 1.0d ? 1.0d / z : z;
             double y = (Math.PI / 4.0d) * w - w * (w - 1) * (0.2447d + 0.0663d * w);
             return Math.Sign(x) * (z > 1.0d ? Math.PI / 2.0d - y : y);
+        }
+
+        /// <summary>
+        /// 快速反正切函数近似，float4版本
+        /// </summary>
+        private static float4 FastAtan(float4 x)
+        {
+            float4 z = math.abs(x);
+            float4 w = math.select(1.0f / z, z, z <= 1.0f);
+            float4 y = (math.PI / 4.0f) * w - w * (w - 1.0f) * (0.2447f + 0.0663f * w);
+            return math.sign(x) * math.select(math.PI / 2.0f - y, y, z <= 1.0f);
         }
 
         /// <summary>
