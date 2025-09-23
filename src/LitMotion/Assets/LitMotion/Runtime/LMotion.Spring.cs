@@ -20,6 +20,7 @@ namespace LitMotion
             /// <returns>Created motion builder</returns>
             public static MotionBuilder<float, SpringOptions, FloatSpringMotionAdapter> Create(float startValue, float endValue, float duration, SpringOptions options)
             {
+                options.CurrentValue.x = startValue;
                 return Create<float, SpringOptions, FloatSpringMotionAdapter>(startValue, endValue, duration)
                     .WithOptions(options);
             }
@@ -34,6 +35,7 @@ namespace LitMotion
             /// <returns>Created motion builder</returns>
             public static MotionBuilder<Vector2, SpringOptions, Vector2SpringMotionAdapter> Create(Vector2 startValue, Vector2 endValue, float duration, SpringOptions options)
             {
+                options.CurrentValue.xy = startValue;
                 return Create<Vector2, SpringOptions, Vector2SpringMotionAdapter>(startValue, endValue, duration)
                     .WithOptions(options);
             }
@@ -48,6 +50,7 @@ namespace LitMotion
             /// <returns>Created motion builder</returns>
             public static MotionBuilder<Vector3, SpringOptions, Vector3SpringMotionAdapter> Create(Vector3 startValue, Vector3 endValue, float duration, SpringOptions options)
             {
+                options.CurrentValue.xyz = startValue;
                 return Create<Vector3, SpringOptions, Vector3SpringMotionAdapter>(startValue, endValue, duration)
                     .WithOptions(options);
             }
@@ -62,6 +65,7 @@ namespace LitMotion
             /// <returns>Created motion builder</returns>
             public static MotionBuilder<Vector4, SpringOptions, Vector4SpringMotionAdapter> Create(Vector4 startValue, Vector4 endValue, float duration, SpringOptions options)
             {
+                options.CurrentValue.xyzw = startValue;
                 return Create<Vector4, SpringOptions, Vector4SpringMotionAdapter>(startValue, endValue, duration)
                     .WithOptions(options);
             }

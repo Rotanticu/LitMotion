@@ -1,4 +1,5 @@
 using System;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace LitMotion
@@ -9,8 +10,9 @@ namespace LitMotion
     [Serializable]
     public struct SpringOptions : IEquatable<SpringOptions>, IMotionOptions
     {
-        public Vector4 CurrentVelocity;
-        public Vector4 TargetVelocity;
+        public float4 CurrentValue;
+        public float4 CurrentVelocity;
+        public float4 TargetVelocity;
         public float Stiffness;
         public float DampingRatio;
 
@@ -22,8 +24,9 @@ namespace LitMotion
                 {
                     Stiffness = 10.0f,
                     DampingRatio = 1.0f,
-                    CurrentVelocity = new Vector4(0.0f, 0.0f, 0.0f, 0.0f),
-                    TargetVelocity = new Vector4(1.0f, 0.0f, 0.0f, 0.0f)
+                    CurrentVelocity = new float4(0.0f, 0.0f, 0.0f, 0.0f),
+                    TargetVelocity = new float4(1.0f, 0.0f, 0.0f, 0.0f),
+                    CurrentValue = new float4(0.0f, 0.0f, 0.0f, 0.0f)
                 };
             }   
         }
@@ -36,8 +39,9 @@ namespace LitMotion
                 {
                     Stiffness = 10.0f,
                     DampingRatio = 1.2f,
-                    CurrentVelocity = new Vector4(0.0f, 0.0f, 0.0f, 0.0f),
-                    TargetVelocity = new Vector4(1.0f, 0.0f, 0.0f, 0.0f)
+                    CurrentVelocity = new float4(0.0f, 0.0f, 0.0f, 0.0f),
+                    TargetVelocity = new float4(1.0f, 0.0f, 0.0f, 0.0f),
+                    CurrentValue = new float4(0.0f, 0.0f, 0.0f, 0.0f)
                 };
             }
         }   
@@ -50,8 +54,9 @@ namespace LitMotion
                 {
                     Stiffness = 10.0f,
                     DampingRatio = 0.6f,
-                    CurrentVelocity = new Vector4(0.0f, 0.0f, 0.0f, 0.0f),
-                    TargetVelocity = new Vector4(1.0f, 0.0f, 0.0f, 0.0f)
+                    CurrentVelocity = new float4(0.0f, 0.0f, 0.0f, 0.0f),
+                    TargetVelocity = new float4(1.0f, 0.0f, 0.0f, 0.0f),
+                    CurrentValue = new float4(0.0f, 0.0f, 0.0f, 0.0f)
                 };
             }
         }
@@ -60,9 +65,9 @@ namespace LitMotion
         {
             return Stiffness == other.Stiffness &&
                    DampingRatio == other.DampingRatio &&
-                   TargetVelocity == other.TargetVelocity &&
-                   CurrentVelocity == other.CurrentVelocity &&
-                   TargetVelocity == other.TargetVelocity;
+                   TargetVelocity.Equals(other.TargetVelocity) &&
+                   CurrentVelocity.Equals(other.CurrentVelocity) &&
+                   CurrentValue.Equals(other.CurrentValue);
         }
 
         public override readonly bool Equals(object obj)
@@ -73,7 +78,7 @@ namespace LitMotion
 
         public override readonly int GetHashCode()
         {
-            return HashCode.Combine(Stiffness, DampingRatio, TargetVelocity, CurrentVelocity, TargetVelocity);
+            return HashCode.Combine(Stiffness, DampingRatio, TargetVelocity, CurrentVelocity, CurrentValue);
         }
     }
 }

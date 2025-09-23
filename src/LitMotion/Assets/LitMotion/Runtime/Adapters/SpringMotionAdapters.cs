@@ -15,24 +15,17 @@ namespace LitMotion.Adapters
     {
         public float Evaluate(ref float startValue, ref float endValue, ref SpringOptions options, in MotionEvaluationContext context)
         {
-            // 使用MotionEvaluationContext中的DeltaTime
-            double deltaTime = context.DeltaTime;
-            
             // 调用SpringElastic函数计算新的位置和速度
-            double newVelocity;
-            double newPosition = SpringUtility.SpringElastic(
-                deltaTime,
-                startValue,
-                options.CurrentVelocity.x,
+            SpringUtility.SpringElastic(
+                (float)context.DeltaTime,
+                ref options.CurrentValue.x,
+                ref options.CurrentVelocity.x,
                 endValue,
-                out newVelocity,
                 options.TargetVelocity.x,
                 options.DampingRatio,
                 options.Stiffness
             );
-            options.CurrentVelocity.x = (float)newVelocity;
-            startValue = (float)newPosition;
-            return (float)newPosition;
+            return options.CurrentValue.x;
         }
     }
 
@@ -47,32 +40,18 @@ namespace LitMotion.Adapters
             float deltaTime = (float)context.DeltaTime;
             
             // 转换为float4进行计算
-            float4 f4StartValue = new float4(startValue, 0, 0);
             float4 f4EndValue = new float4(endValue, 0, 0);
-            float4 f4CurrentVelocity = new float4(options.CurrentVelocity.x, options.CurrentVelocity.y, 0, 0);
-            float4 f4TargetVelocity = new float4(options.TargetVelocity.x, options.TargetVelocity.y, 0, 0);
-            float4 f4NewVelocity = default;
-            float4 f4NewPosition = default; // 新位置
             // 使用float4版本的SpringElastic
             SpringUtility.SpringElastic(
                 deltaTime,
-                ref f4StartValue,
-                ref f4CurrentVelocity,
-                ref f4EndValue,
-                ref f4NewVelocity,
-                ref f4TargetVelocity,
-                ref f4NewPosition,
+                ref options.CurrentValue,
+                ref options.CurrentVelocity,
+                f4EndValue,
+                options.TargetVelocity,
                 options.DampingRatio,
                 options.Stiffness
             );
-            
-            // 更新速度和位置（通过ref修改，不使用new）
-            options.CurrentVelocity.x = f4NewVelocity.x;
-            options.CurrentVelocity.y = f4NewVelocity.y;
-            startValue.x = (float)f4NewPosition.x;
-            startValue.y = (float)f4NewPosition.y;
-            
-            return startValue;
+            return options.CurrentValue.xy;
         }
     }
 
@@ -85,36 +64,19 @@ namespace LitMotion.Adapters
         {
             // 使用MotionEvaluationContext中的DeltaTime
             float deltaTime = (float)context.DeltaTime;
-            float4 f4NewVelocity = default;
-            float4 f4NewPosition = default; // 新位置
             // 转换为float4进行计算
-            float4 f4StartValue = new float4(startValue, 0);
             float4 f4EndValue = new float4(endValue, 0);
-            float4 f4CurrentVelocity = new float4(options.CurrentVelocity.x, options.CurrentVelocity.y, options.CurrentVelocity.z, 0);
-            float4 f4TargetVelocity = new float4(options.TargetVelocity.x, options.TargetVelocity.y, options.TargetVelocity.z, 0);
-            
             // 使用float4版本的SpringElastic
             SpringUtility.SpringElastic(
                 deltaTime,
-                ref f4StartValue,
-                ref f4CurrentVelocity,
-                ref f4EndValue,
-                ref f4NewVelocity,
-                ref f4TargetVelocity,
-                ref f4NewPosition,
+                ref options.CurrentValue,
+                ref options.CurrentVelocity,
+                f4EndValue,
+                options.TargetVelocity,
                 options.DampingRatio,
                 options.Stiffness
             );
-            
-            // 更新速度和位置（通过ref修改，不使用new）
-            options.CurrentVelocity.x = f4NewVelocity.x;
-            options.CurrentVelocity.y = f4NewVelocity.y;
-            options.CurrentVelocity.z = f4NewVelocity.z;
-            startValue.x = f4NewPosition.x;
-            startValue.y = f4NewPosition.y;
-            startValue.z = f4NewPosition.z;
-            
-            return startValue;
+            return options.CurrentValue.xyz;
         }
     }
 
@@ -129,36 +91,19 @@ namespace LitMotion.Adapters
             float deltaTime = (float)context.DeltaTime;
             
             // 转换为float4进行计算
-            float4 f4StartValue = startValue;
             float4 f4EndValue = endValue;
-            float4 f4CurrentVelocity = options.CurrentVelocity;
-            float4 f4TargetVelocity = options.TargetVelocity;
-            float4 f4NewVelocity = default;
-            float4 f4NewPosition = default; // 新位置
             // 使用float4版本的SpringElastic
             SpringUtility.SpringElastic(
                 deltaTime,
-                ref f4StartValue,
-                ref f4CurrentVelocity,
-                ref f4EndValue,
-                ref f4NewVelocity,
-                ref f4TargetVelocity,
-                ref f4NewPosition,
+                ref options.CurrentValue,
+                ref options.CurrentVelocity,
+                f4EndValue,
+                options.TargetVelocity,
                 options.DampingRatio,
                 options.Stiffness
             );
             
-            // 更新速度和位置（通过ref修改，不使用new）
-            options.CurrentVelocity.x = f4NewVelocity.x;
-            options.CurrentVelocity.y = f4NewVelocity.y;
-            options.CurrentVelocity.z = f4NewVelocity.z;
-            options.CurrentVelocity.w = f4NewVelocity.w;
-            startValue.x = (float)f4NewPosition.x;
-            startValue.y = (float)f4NewPosition.y;
-            startValue.z = (float)f4NewPosition.z;
-            startValue.w = (float)f4NewPosition.w;
-            
-            return startValue;
+            return options.CurrentValue;
         }
     }
 }
