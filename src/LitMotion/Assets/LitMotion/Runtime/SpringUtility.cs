@@ -5,6 +5,7 @@ using UnityEngine;
 using static Unity.Mathematics.math;
 namespace LitMotion
 {
+    [BurstCompile]
     public static class SpringUtility
     {
         /// <summary>
@@ -29,7 +30,7 @@ namespace LitMotion
             // SpringSimple是专门为临界阻尼设计的简化版本
             // 直接使用stiffness作为自然频率，阻尼系数的一半等于自然频率
             double naturalFreq = stiffness;
-            
+
             // 临界阻尼的计算逻辑
             double displacementFromTarget = currentValue - targetValue;  // 当前位置与目标的位移差
             double velocityWithDamping = currentVelocity + displacementFromTarget * naturalFreq;  // 考虑阻尼的初始速度
@@ -148,7 +149,7 @@ namespace LitMotion
         {
             // 将stiffness参数重命名为naturalFreq进行内部计算
             double naturalFreq = stiffness;
-            
+
             // 根据targetVelocity调整目标位置（类似SpringElastic的逻辑）
             double adjustedTargetPosition = targetValue;
             if (Math.Abs(targetVelocity) > precision)
@@ -160,7 +161,7 @@ namespace LitMotion
                 double stiffnessValue = naturalFreq * naturalFreq;
                 adjustedTargetPosition = targetValue + (dampingCoeff * targetVelocity) / (stiffnessValue + precision);
             }
-            
+
             double adjustedDisplacement = currentValue - adjustedTargetPosition;
             double dampingRatioSquared = dampingRatio * dampingRatio;
             double r = -dampingRatio * naturalFreq;
@@ -235,17 +236,17 @@ namespace LitMotion
         {
             // 按照原始版本的设计，直接使用stiffness作为自然频率
             double naturalFreq = stiffness;
-            
+
             // 计算目标与中间位置的差值
             double targetIntermediateDiff = targetValue - intermediatePosition;
             double absTargetIntermediateDiff = Math.Abs(targetIntermediateDiff);
-            
+
             // 计算速度方向
             double velocityDirection = (targetIntermediateDiff > 0.0d ? 1.0d : -1.0d) * smothingVelocity;
 
             // 计算预期时间
             double anticipatedTime = 1d / naturalFreq;
-            
+
             // 计算未来目标位置
             double futureTargetPosition = absTargetIntermediateDiff > anticipatedTime * smothingVelocity ?
                 intermediatePosition + velocityDirection * anticipatedTime : targetValue;
@@ -254,7 +255,7 @@ namespace LitMotion
             double result = SpringSimple(deltaTime, currentValue, currentVelocity, futureTargetPosition, out newVelocity, stiffness);
 
             // 更新中间位置
-            intermediatePosition = absTargetIntermediateDiff > deltaTime * smothingVelocity ? 
+            intermediatePosition = absTargetIntermediateDiff > deltaTime * smothingVelocity ?
                 intermediatePosition + velocityDirection * deltaTime : targetValue;
 
             return result;
@@ -287,16 +288,16 @@ namespace LitMotion
             // 直接使用stiffness作为自然频率
             double naturalFreq = stiffness;
             double tGoal = durationSeconds;
-            
+
             // 计算最小时间
             double minTime = tGoal > deltaTime ? tGoal : deltaTime;
-            
+
             // 基于中间位置计算目标速度
             double targetVel = (targetValue - intermediatePosition) / minTime;
 
             // 计算预期时间
             double anticipatedTime = 1d / naturalFreq;
-            
+
             // 计算未来目标位置
             double futureTargetPosition = anticipatedTime < tGoal ?
                 intermediatePosition + targetVel * anticipatedTime : targetValue;
@@ -334,7 +335,7 @@ namespace LitMotion
             double stiffness = 1.0d)
         {
             double doubleStiffness = 2.0d * stiffness;
-            
+
             // 第一层弹簧：从中间位置到目标位置
             // 直接修改intermediatePosition和intermediateVelocity
             intermediatePosition = SpringSimple(deltaTime, intermediatePosition, intermediateVelocity, targetValue, out intermediateVelocity, doubleStiffness);
@@ -344,8 +345,8 @@ namespace LitMotion
             return SpringSimple(deltaTime, currentValue, currentVelocity, intermediatePosition, out newVelocity, doubleStiffness);
         }
 
-#region float4版本的Spring函数
-        
+        #region float4版本的Spring函数
+
         /// <summary>
         /// 简易弹簧阻尼器，只有临界阻尼，没有过阻尼和欠阻尼
         /// </summary>
@@ -357,12 +358,14 @@ namespace LitMotion
         /// <param name="dampingRatio">阻尼比</param>
         /// <param name="stiffness">弹簧刚度（实际上直接作为自然频率使用）</param>
         /// <returns>新的位移值</returns>
-        public static float4 SpringSimple(
+        [BurstCompile]
+        public static void SpringSimple(
             float deltaTime,
-            float4 currentValue,
-            float4 currentVelocity,
-            float4 targetValue,
-            out float4 newVelocity,
+            ref float4 currentValue,
+            ref float4 currentVelocity,
+            ref float4 targetValue,
+            ref float4 newVelocity,
+            ref float4 result,
             float stiffness = 1.0f)
         {
             // SpringSimple是专门为临界阻尼设计的简化版本
@@ -375,11 +378,8 @@ namespace LitMotion
             float4 exponentialDecay = (float4)FastNegExp(naturalFreq * deltaTime); // 指数衰减因子
 
             // 临界阻尼的更新公式
-            float4 newPosition = exponentialDecay * (displacementFromTarget + velocityWithDamping * deltaTime) + targetValue;  // 新位置
-            float4 newVel = exponentialDecay * (currentVelocity - velocityWithDamping * naturalFreq * deltaTime);    // 新速度
-
-            newVelocity = newVel;
-            return newPosition;
+            result = exponentialDecay * (displacementFromTarget + velocityWithDamping * deltaTime) + targetValue;  // 新位置
+            newVelocity = exponentialDecay * (currentVelocity - velocityWithDamping * naturalFreq * deltaTime);    // 新速度
         }
 
         /// <summary>
@@ -395,13 +395,15 @@ namespace LitMotion
         /// <param name="stiffness">弹簧刚度（实际上直接作为自然频率使用）5 = 1秒 10 = 0.5秒 16.5 = 0.2秒 </param>
         /// <param name="precision">计算精度容差</param>
         /// <returns>新的位移值</returns>
-        public static float4 SpringElastic(
+        [BurstCompile]
+        public static void SpringElastic(
             float deltaTime,
-            float4 currentValue,
-            float4 currentVelocity,
-            float4 targetValue,
-            out float4 newVelocity,
-            float4 targetVelocity = default,
+            ref float4 currentValue,
+            ref float4 currentVelocity,
+            ref float4 targetValue,
+            ref float4 newVelocity,
+            ref float4 targetVelocity,
+            ref float4 result,
             float dampingRatio = 0.5f,
             float stiffness = 1.0f,
             float precision = 1e-5f)
@@ -459,7 +461,7 @@ namespace LitMotion
             }
 
             newVelocity = currentVel;
-            return currentPosition;
+            result = currentPosition;
         }
 
         /// <summary>
@@ -474,43 +476,45 @@ namespace LitMotion
         /// <param name="smothingVelocity">平滑速度</param>
         /// <param name="stiffness">弹簧刚度（实际上直接作为自然频率使用）</param>
         /// <returns>新的位移值</returns>
-        public static float4 SpringSimpleVelocitySmoothing(
+        [BurstCompile]
+        public static void SpringSimpleVelocitySmoothing(
             float deltaTime,
-            float4 currentValue,
-            float4 currentVelocity,
-            float4 targetValue,
-            out float4 newVelocity,
+            ref float4 currentValue,
+            ref float4 currentVelocity,
+            ref float4 targetValue,
+            ref float4 newVelocity,
             ref float4 intermediatePosition,
+            ref float4 result,
             float smothingVelocity = 2f,
             float stiffness = 1.0f)
         {
             // 按照原始版本的设计，直接使用stiffness作为自然频率
             float naturalFreq = stiffness;
-            
+
             // 计算目标与中间位置的差值
             float4 targetIntermediateDiff = targetValue - intermediatePosition;
             float4 absTargetIntermediateDiff = math.abs(targetIntermediateDiff);
-            
+
             // 计算速度方向
             float4 velocityDirection = math.sign(targetIntermediateDiff) * smothingVelocity;
 
             // 计算预期时间
             float anticipatedTime = 1f / naturalFreq;
-            
+
             // 计算未来目标位置
-            float4 futureTargetPosition = math.select(targetValue, 
-                intermediatePosition + velocityDirection * anticipatedTime, 
+            float4 futureTargetPosition = math.select(targetValue,
+                intermediatePosition + velocityDirection * anticipatedTime,
                 absTargetIntermediateDiff > anticipatedTime * smothingVelocity);
 
             // 直接调用SpringSimple函数
-            float4 result = SpringSimple(deltaTime, currentValue, currentVelocity, futureTargetPosition, out newVelocity, stiffness);
+            SpringSimple(deltaTime, ref currentValue, ref currentVelocity, ref futureTargetPosition, ref newVelocity, ref result, stiffness);
 
             // 更新中间位置
-            intermediatePosition = math.select(targetValue, 
-                intermediatePosition + velocityDirection * deltaTime, 
+            intermediatePosition = math.select(targetValue,
+                intermediatePosition + velocityDirection * deltaTime,
                 absTargetIntermediateDiff > deltaTime * smothingVelocity);
 
-            return result;
+            // result已经在SpringSimple调用中设置
         }
 
         /// <summary>
@@ -525,41 +529,43 @@ namespace LitMotion
         /// <param name="durationSeconds">目标到达时间（秒）</param>
         /// <param name="stiffness">弹簧刚度（实际上直接作为自然频率使用）</param>
         /// <returns>新的位移值</returns>
-        public static float4 SpringSimpleDurationLimit(
+        [BurstCompile]
+        public static void SpringSimpleDurationLimit(
             float deltaTime,
-            float4 currentValue,
-            float4 currentVelocity,
-            float4 targetValue,
-            out float4 newVelocity,
+            ref float4 currentValue,
+            ref float4 currentVelocity,
+            ref float4 targetValue,
+            ref float4 newVelocity,
             ref float4 intermediatePosition,
+            ref float4 result,
             float durationSeconds = 0.2f,
             float stiffness = 1.0f)
         {
             // 直接使用stiffness作为自然频率
             float naturalFreq = stiffness;
             float tGoal = durationSeconds;
-            
+
             // 计算最小时间
             float minTime = math.max(tGoal, deltaTime);
-            
+
             // 基于中间位置计算目标速度
             float4 targetVel = (targetValue - intermediatePosition) / minTime;
 
             // 计算预期时间
             float anticipatedTime = 1f / naturalFreq;
-            
+
             // 计算未来目标位置
             float4 futureTargetPosition = math.select(targetValue,
-                intermediatePosition + targetVel * anticipatedTime, 
+                intermediatePosition + targetVel * anticipatedTime,
                 anticipatedTime < tGoal);
 
             // 直接调用SpringSimple函数
-            float4 result = SpringSimple(deltaTime, currentValue, currentVelocity, futureTargetPosition, out newVelocity, stiffness);
+            SpringSimple(deltaTime, ref currentValue, ref currentVelocity, ref futureTargetPosition, ref newVelocity, ref result, stiffness);
 
             // 更新中间位置
             intermediatePosition += targetVel * deltaTime;
 
-            return result;
+            // result已经在SpringSimple调用中设置
         }
 
         /// <summary>
@@ -574,25 +580,27 @@ namespace LitMotion
         /// <param name="intermediateVelocity">中间速度（用于维护状态）</param>
         /// <param name="stiffness">弹簧刚度（实际上直接作为自然频率使用）</param>
         /// <returns>新的位移值</returns>
-        public static float4 SpringSimpleDoubleSmoothing(
+        [BurstCompile]
+        public static void SpringSimpleDoubleSmoothing(
             float deltaTime,
-            float4 currentValue,
-            float4 currentVelocity,
-            float4 targetValue,
-            out float4 newVelocity,
+            ref float4 currentValue,
+            ref float4 currentVelocity,
+            ref float4 targetValue,
+            ref float4 newVelocity,
             ref float4 intermediatePosition,
             ref float4 intermediateVelocity,
+            ref float4 result,
             float stiffness = 1.0f)
         {
             float doubleStiffness = 2.0f * stiffness;
             
             // 第一层弹簧：从中间位置到目标位置
             // 直接修改intermediatePosition和intermediateVelocity
-            intermediatePosition = SpringSimple(deltaTime, intermediatePosition, intermediateVelocity, targetValue, out intermediateVelocity, doubleStiffness);
+            SpringSimple(deltaTime, ref intermediatePosition, ref intermediateVelocity, ref targetValue, ref intermediateVelocity, ref intermediatePosition, doubleStiffness);
 
             // 第二层弹簧：从当前位置到中间位置
             // 使用修改后的intermediatePosition作为目标
-            return SpringSimple(deltaTime, currentValue, currentVelocity, intermediatePosition, out newVelocity, doubleStiffness);
+            SpringSimple(deltaTime, ref currentValue, ref currentVelocity, ref intermediatePosition, ref newVelocity, ref result, doubleStiffness);
         }
 
         #endregion
@@ -640,7 +648,7 @@ namespace LitMotion
         /// <param name="naturalFreq">自然频率（rad/s）</param>
         /// <returns>半衰期（秒）</returns>
         private static double NaturalFreqToHalflife(double naturalFreq)
-        {   
+        {
             return 0.69314718056d / naturalFreq;  // τ₁/₂ = ln(2) / ω₀
         }
         private static double FastNegExp(double x)
@@ -713,6 +721,6 @@ namespace LitMotion
             // TODO: 在弹簧实现中正确支持纳秒
             long playTimeMillis = playTimeNanos / 1_000_000L;
             return SpringPrecise(playTimeMillis, initialValue, initialVelocity, targetValue, out _, targetVelocity, dampingRatio, stiffness, precision);
+        }
     }
-}
 }

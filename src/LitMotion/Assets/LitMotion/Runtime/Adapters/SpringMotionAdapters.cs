@@ -51,15 +51,17 @@ namespace LitMotion.Adapters
             float4 f4EndValue = new float4(endValue, 0, 0);
             float4 f4CurrentVelocity = new float4(options.CurrentVelocity.x, options.CurrentVelocity.y, 0, 0);
             float4 f4TargetVelocity = new float4(options.TargetVelocity.x, options.TargetVelocity.y, 0, 0);
-            
+            float4 f4NewVelocity = default;
+            float4 f4NewPosition = default; // 新位置
             // 使用float4版本的SpringElastic
-            float4 f4NewPosition = SpringUtility.SpringElastic(
+            SpringUtility.SpringElastic(
                 deltaTime,
-                f4StartValue,
-                f4CurrentVelocity,
-                f4EndValue,
-                out float4 f4NewVelocity,
-                f4TargetVelocity,
+                ref f4StartValue,
+                ref f4CurrentVelocity,
+                ref f4EndValue,
+                ref f4NewVelocity,
+                ref f4TargetVelocity,
+                ref f4NewPosition,
                 options.DampingRatio,
                 options.Stiffness
             );
@@ -67,8 +69,8 @@ namespace LitMotion.Adapters
             // 更新速度和位置（通过ref修改，不使用new）
             options.CurrentVelocity.x = f4NewVelocity.x;
             options.CurrentVelocity.y = f4NewVelocity.y;
-            startValue.x = f4NewPosition.x;
-            startValue.y = f4NewPosition.y;
+            startValue.x = (float)f4NewPosition.x;
+            startValue.y = (float)f4NewPosition.y;
             
             return startValue;
         }
@@ -83,7 +85,8 @@ namespace LitMotion.Adapters
         {
             // 使用MotionEvaluationContext中的DeltaTime
             float deltaTime = (float)context.DeltaTime;
-            
+            float4 f4NewVelocity = default;
+            float4 f4NewPosition = default; // 新位置
             // 转换为float4进行计算
             float4 f4StartValue = new float4(startValue, 0);
             float4 f4EndValue = new float4(endValue, 0);
@@ -91,13 +94,14 @@ namespace LitMotion.Adapters
             float4 f4TargetVelocity = new float4(options.TargetVelocity.x, options.TargetVelocity.y, options.TargetVelocity.z, 0);
             
             // 使用float4版本的SpringElastic
-            float4 f4NewPosition = SpringUtility.SpringElastic(
+            SpringUtility.SpringElastic(
                 deltaTime,
-                f4StartValue,
-                f4CurrentVelocity,
-                f4EndValue,
-                out float4 f4NewVelocity,
-                f4TargetVelocity,
+                ref f4StartValue,
+                ref f4CurrentVelocity,
+                ref f4EndValue,
+                ref f4NewVelocity,
+                ref f4TargetVelocity,
+                ref f4NewPosition,
                 options.DampingRatio,
                 options.Stiffness
             );
@@ -129,15 +133,17 @@ namespace LitMotion.Adapters
             float4 f4EndValue = endValue;
             float4 f4CurrentVelocity = options.CurrentVelocity;
             float4 f4TargetVelocity = options.TargetVelocity;
-            
+            float4 f4NewVelocity = default;
+            float4 f4NewPosition = default; // 新位置
             // 使用float4版本的SpringElastic
-            float4 f4NewPosition = SpringUtility.SpringElastic(
+            SpringUtility.SpringElastic(
                 deltaTime,
-                f4StartValue,
-                f4CurrentVelocity,
-                f4EndValue,
-                out float4 f4NewVelocity,
-                f4TargetVelocity,
+                ref f4StartValue,
+                ref f4CurrentVelocity,
+                ref f4EndValue,
+                ref f4NewVelocity,
+                ref f4TargetVelocity,
+                ref f4NewPosition,
                 options.DampingRatio,
                 options.Stiffness
             );
@@ -147,10 +153,10 @@ namespace LitMotion.Adapters
             options.CurrentVelocity.y = f4NewVelocity.y;
             options.CurrentVelocity.z = f4NewVelocity.z;
             options.CurrentVelocity.w = f4NewVelocity.w;
-            startValue.x = f4NewPosition.x;
-            startValue.y = f4NewPosition.y;
-            startValue.z = f4NewPosition.z;
-            startValue.w = f4NewPosition.w;
+            startValue.x = (float)f4NewPosition.x;
+            startValue.y = (float)f4NewPosition.y;
+            startValue.z = (float)f4NewPosition.z;
+            startValue.w = (float)f4NewPosition.w;
             
             return startValue;
         }
