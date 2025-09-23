@@ -25,7 +25,7 @@ namespace LitMotion
             double currentVelocity,
             double targetValue,
             out double newVelocity,
-            double stiffness = 1.0d)
+            double stiffness = 10.0d)
         {
             // SpringSimple是专门为临界阻尼设计的简化版本
             // 直接使用stiffness作为自然频率，阻尼系数的一半等于自然频率
@@ -65,7 +65,7 @@ namespace LitMotion
             out double newVelocity,
             double targetVelocity = 0.0d,
             double dampingRatio = 0.5f,
-            double stiffness = 1.0d,
+            double stiffness = 10.0d,
             double precision = 1e-5f)
         {
             // 使用有意义的变量名，提高代码可读性
@@ -144,7 +144,7 @@ namespace LitMotion
             out double newVelocity,
             double targetVelocity = 0.0d,
             double dampingRatio = 0.5d,
-            double stiffness = 1.0d,
+            double stiffness = 10.0d,
             double precision = 1e-5d)
         {
             // 将stiffness参数重命名为naturalFreq进行内部计算
@@ -232,7 +232,7 @@ namespace LitMotion
             out double newVelocity,
             ref double intermediatePosition,
             double smothingVelocity = 2d,
-            double stiffness = 1.0d)
+            double stiffness = 10.0d)
         {
             // 按照原始版本的设计，直接使用stiffness作为自然频率
             double naturalFreq = stiffness;
@@ -283,7 +283,7 @@ namespace LitMotion
             out double newVelocity,
             ref double intermediatePosition,
             double durationSeconds = 0.2d,
-            double stiffness = 1.0d)
+            double stiffness = 10.0d)
         {
             // 直接使用stiffness作为自然频率
             double naturalFreq = stiffness;
@@ -332,7 +332,7 @@ namespace LitMotion
             out double newVelocity,
             ref double intermediatePosition,
             ref double intermediateVelocity,
-            double stiffness = 1.0d)
+            double stiffness = 10.0d)
         {
             double doubleStiffness = 2.0d * stiffness;
 
