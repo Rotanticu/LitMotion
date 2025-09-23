@@ -262,18 +262,15 @@ namespace LitMotion
         }
 
         /// <summary>
-        /// 时间限制弹簧阻尼器，支持指定到达时间
+        /// 时间限制弹簧阻尼器，根据指定到达时间自动计算合适的刚度
         /// </summary>
-        /// <param name="timeElapsed">经过时间（毫秒）</param>
+        /// <param name="deltaTime">时间步长（秒）</param>
         /// <param name="currentValue">当前值</param>
         /// <param name="currentVelocity">当前速度</param>
         /// <param name="targetValue">目标值</param>
         /// <param name="newVelocity">输出新的速度</param>
         /// <param name="intermediatePosition">中间位置（用于维护状态）</param>
-        /// <param name="durationMillisecond">目标到达时间（毫秒）</param>
-        /// <param name="dampingRatio">阻尼比</param>
-        /// <param name="stiffness">弹簧刚度（实际上直接作为自然频率使用）</param>
-        /// <param name="anticipation">预期系数，用于预测未来目标位置</param>
+        /// <param name="durationSeconds">目标到达时间（秒）</param>
         /// <returns>新的位移值</returns>
         public static double SpringSimpleDurationLimit(
             double deltaTime,
@@ -281,32 +278,17 @@ namespace LitMotion
             double currentVelocity,
             double targetValue,
             out double newVelocity,
-            ref double intermediatePosition,
-            double durationSeconds = 0.2d,
-            double stiffness = 10.0d)
+            double durationSeconds = 0.2d)
         {
-            // 直接使用stiffness作为自然频率
-            double naturalFreq = stiffness;
-            double tGoal = durationSeconds;
+            // 根据目标时间计算合适的自然频率
+            // 对于临界阻尼系统，收敛时间约为 3-4 倍的时间常数
+            // 时间常数 = 1 / naturalFreq，所以 naturalFreq = 4.6 / durationSeconds
+            // 这样可以在durationSeconds时间内达到约99%收敛
+            double naturalFreq = 4.6d / durationSeconds;
 
-            // 计算最小时间
-            double minTime = tGoal > deltaTime ? tGoal : deltaTime;
-
-            // 基于中间位置计算目标速度
-            double targetVel = (targetValue - intermediatePosition) / minTime;
-
-            // 计算预期时间
-            double anticipatedTime = 1d / naturalFreq;
-
-            // 计算未来目标位置
-            double futureTargetPosition = anticipatedTime < tGoal ?
-                intermediatePosition + targetVel * anticipatedTime : targetValue;
-
-            // 直接调用SpringSimple函数
-            double result = SpringSimple(deltaTime, currentValue, currentVelocity, futureTargetPosition, out newVelocity, stiffness);
-
-            // 更新中间位置
-            intermediatePosition += targetVel * deltaTime;
+            // 直接使用目标值，不需要复杂的中间目标逻辑
+            // 让弹簧直接收敛到最终目标
+            double result = SpringSimple(deltaTime, currentValue, currentVelocity, targetValue, out newVelocity, naturalFreq);
 
             return result;
         }
@@ -518,7 +500,7 @@ namespace LitMotion
         }
 
         /// <summary>
-        /// 时间限制弹簧阻尼器，float4版本，支持指定到达时间
+        /// 时间限制弹簧阻尼器，float4版本，根据指定到达时间自动计算合适的刚度
         /// </summary>
         /// <param name="deltaTime">时间步长（秒）</param>
         /// <param name="currentValue">当前值</param>
@@ -527,7 +509,6 @@ namespace LitMotion
         /// <param name="newVelocity">输出新的速度</param>
         /// <param name="intermediatePosition">中间位置（用于维护状态）</param>
         /// <param name="durationSeconds">目标到达时间（秒）</param>
-        /// <param name="stiffness">弹簧刚度（实际上直接作为自然频率使用）</param>
         /// <returns>新的位移值</returns>
         [BurstCompile]
         public static void SpringSimpleDurationLimit(
@@ -536,34 +517,18 @@ namespace LitMotion
             ref float4 currentVelocity,
             ref float4 targetValue,
             ref float4 newVelocity,
-            ref float4 intermediatePosition,
             ref float4 result,
-            float durationSeconds = 0.2f,
-            float stiffness = 1.0f)
+            float durationSeconds = 0.2f)
         {
-            // 直接使用stiffness作为自然频率
-            float naturalFreq = stiffness;
-            float tGoal = durationSeconds;
+            // 根据目标时间计算合适的自然频率
+            // 对于临界阻尼系统，收敛时间约为 3-4 倍的时间常数
+            // 时间常数 = 1 / naturalFreq，所以 naturalFreq = 4.6 / durationSeconds
+            // 这样可以在durationSeconds时间内达到约99%收敛
+            float naturalFreq = 4.6f / durationSeconds;
 
-            // 计算最小时间
-            float minTime = math.max(tGoal, deltaTime);
-
-            // 基于中间位置计算目标速度
-            float4 targetVel = (targetValue - intermediatePosition) / minTime;
-
-            // 计算预期时间
-            float anticipatedTime = 1f / naturalFreq;
-
-            // 计算未来目标位置
-            float4 futureTargetPosition = math.select(targetValue,
-                intermediatePosition + targetVel * anticipatedTime,
-                anticipatedTime < tGoal);
-
-            // 直接调用SpringSimple函数
-            SpringSimple(deltaTime, ref currentValue, ref currentVelocity, ref futureTargetPosition, ref newVelocity, ref result, stiffness);
-
-            // 更新中间位置
-            intermediatePosition += targetVel * deltaTime;
+            // 直接使用目标值，不需要复杂的中间目标逻辑
+            // 让弹簧直接收敛到最终目标
+            SpringSimple(deltaTime, ref currentValue, ref currentVelocity, ref targetValue, ref newVelocity, ref result, naturalFreq);
 
             // result已经在SpringSimple调用中设置
         }
