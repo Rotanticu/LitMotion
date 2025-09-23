@@ -695,32 +695,5 @@ namespace LitMotion
         {
             return x * x;
         }
-
-        /// <summary>
-        /// 根据纳秒时间计算弹簧动画值
-        /// </summary>
-        /// <param name="playTimeNanos">播放时间（纳秒）</param>
-        /// <param name="initialValue">初始值</param>
-        /// <param name="targetValue">目标值</param>
-        /// <param name="initialVelocity">初始速度</param>
-        /// <param name="dampingRatio">阻尼比</param>
-        /// <param name="stiffness">弹簧刚度（实际上直接作为自然频率使用）</param>
-        /// <param name="targetVelocity">目标速度（到达目标位置时的期望速度）</param>
-        /// <param name="precision">计算精度容差</param>
-        /// <returns>当前动画值</returns>
-        public static double GetSpringValueAndVelocityFromNanos(
-            long playTimeNanos,
-            double initialValue,
-            double targetValue,
-            double initialVelocity,
-            double dampingRatio = 0.5f,
-            double stiffness = 1.0d,
-            double targetVelocity = 0.0d,
-            double precision = 1e-5f)
-        {
-            // TODO: 在弹簧实现中正确支持纳秒
-            long playTimeMillis = playTimeNanos / 1_000_000L;
-            return SpringPrecise(playTimeMillis, initialValue, initialVelocity, targetValue, out _, targetVelocity, dampingRatio, stiffness, precision);
-        }
     }
 }
