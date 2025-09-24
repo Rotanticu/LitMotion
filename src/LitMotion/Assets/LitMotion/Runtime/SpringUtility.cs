@@ -51,7 +51,6 @@ namespace LitMotion
         /// <param name="targetVelocity">目标速度（到达目标位置时的期望速度）</param>
         /// <param name="dampingRatio">阻尼比 0.6 = Q弹 1 = 临界 1.2 = 稍缓</param>
         /// <param name="stiffness">弹簧刚度（实际上直接作为自然频率使用）5 = 1秒 10 = 0.5秒 16.5 = 0.2秒 </param>
-        /// <param name="precision">计算精度容差</param>
         /// <returns>新的位移值</returns>
         public static void SpringElastic(
             in float deltaTime,
@@ -60,8 +59,7 @@ namespace LitMotion
             in float targetValue,
             in float targetVelocity = 0.0f,
             in float dampingRatio = 0.5f,
-            in float stiffness = 10.0f,
-            in float precision = 1e-5f)
+            in float stiffness = 10.0f)
         {
             // 使用有意义的变量名，提高代码可读性
             float targetPosition = targetValue;
@@ -71,9 +69,9 @@ namespace LitMotion
             float stiffnessValue = naturalFreq * naturalFreq;  // 刚度值 = naturalFreq²
             float dampingHalf = dampingRatio * naturalFreq;
             float dampingCoeff = 2.0f * dampingHalf;  // 阻尼系数 = 2 * 阻尼比 * naturalFreq
-            float adjustedTargetPosition = targetPosition + (dampingCoeff * targetVel) / (stiffnessValue + precision);
+            float adjustedTargetPosition = targetPosition + (dampingCoeff * targetVel) / stiffnessValue;
 
-            if (Math.Abs(stiffnessValue - (dampingCoeff * dampingCoeff) / 4.0f) < precision) // Critically Damped
+            if (Math.Abs(dampingRatio - 1.0f) < 1e-5f) // Critically Damped
             {
                 float initialDisplacement = currentValue - adjustedTargetPosition;
                 float initialVelocityWithDamping = currentVelocity + initialDisplacement * dampingHalf;
@@ -83,12 +81,12 @@ namespace LitMotion
                 currentValue = initialDisplacement * exponentialDecay + deltaTime * initialVelocityWithDamping * exponentialDecay + adjustedTargetPosition;
                 currentVelocity = -dampingHalf * initialDisplacement * exponentialDecay - dampingHalf * deltaTime * initialVelocityWithDamping * exponentialDecay + initialVelocityWithDamping * exponentialDecay;
             }
-            else if (stiffnessValue - (dampingCoeff * dampingCoeff) / 4.0f > 0.0f) // Under Damped
+            else if (dampingRatio < 1.0f) // Under Damped
             {
                 float dampedFrequency = math.sqrt(stiffnessValue - (dampingCoeff * dampingCoeff) / 4.0f);
                 float displacementFromTarget = currentValue - adjustedTargetPosition;
-                float amplitude = math.sqrt(FastSquare(currentVelocity + dampingHalf * displacementFromTarget) / (dampedFrequency * dampedFrequency + precision) + FastSquare(displacementFromTarget));
-                float phase = FastAtan((currentVelocity + displacementFromTarget * dampingHalf) / (-displacementFromTarget * dampedFrequency + precision));
+                float amplitude = math.sqrt(FastSquare(currentVelocity + dampingHalf * displacementFromTarget) / (dampedFrequency * dampedFrequency) + FastSquare(displacementFromTarget));
+                float phase = FastAtan((currentVelocity + displacementFromTarget * dampingHalf) / (-displacementFromTarget * dampedFrequency));
 
                 amplitude = displacementFromTarget > 0.0f ? amplitude : -amplitude;
 
@@ -97,7 +95,7 @@ namespace LitMotion
                 currentValue = amplitude * exponentialDecay * math.cos(dampedFrequency * deltaTime + phase) + adjustedTargetPosition;
                 currentVelocity = -dampingHalf * amplitude * exponentialDecay * math.cos(dampedFrequency * deltaTime + phase) - dampedFrequency * amplitude * exponentialDecay * math.sin(dampedFrequency * deltaTime + phase);
             }
-            else if (stiffnessValue - (dampingCoeff * dampingCoeff) / 4.0f < 0.0f) // Over Damped
+            else // Over Damped (dampingRatio > 1.0f)
             {
                 float fastDecayRate = (dampingCoeff + math.sqrt(dampingCoeff * dampingCoeff - 4f * stiffnessValue)) / 2.0f;
                 float slowDecayRate = (dampingCoeff - math.sqrt(dampingCoeff * dampingCoeff - 4f * stiffnessValue)) / 2.0f;
@@ -124,7 +122,6 @@ namespace LitMotion
         /// <param name="dampingRatio">阻尼比</param>
         /// <param name="stiffness">弹簧刚度（实际上直接作为自然频率使用）</param>
         /// <param name="targetVelocity">目标速度（到达目标位置时的期望速度）</param>
-        /// <param name="precision">计算精度容差</param>
         /// <returns>新的位移值</returns>
         public static void SpringPrecise(
             in float deltaTime,
@@ -133,22 +130,21 @@ namespace LitMotion
             in float targetValue,
             in float targetVelocity = 0.0f,
             in float dampingRatio = 0.5f,
-            in float stiffness = 10.0f,
-            in float precision = 1e-5f)
+            in float stiffness = 10.0f)
         {
             // 将stiffness参数重命名为naturalFreq进行内部计算
             float naturalFreq = stiffness;
 
             // 根据targetVelocity调整目标位置（类似SpringElastic的逻辑）
             float adjustedTargetPosition = targetValue;
-            if (math.abs(targetVelocity) > precision)
+            if (math.abs(targetVelocity) > 1e-5f)
             {
                 // 计算调整后的目标位置，使系统在到达目标时具有指定速度
-                // 使用与SpringElastic相同的逻辑：c = g + (d * q) / (s + eps)
+                // 使用与SpringElastic相同的逻辑：c = g + (d * q) / s
                 // 其中 d = 2 * dampingRatio * naturalFreq, s = naturalFreq^2
                 float dampingCoeff = 2.0f * dampingRatio * naturalFreq;
                 float stiffnessValue = naturalFreq * naturalFreq;
-                adjustedTargetPosition = targetValue + (dampingCoeff * targetVelocity) / (stiffnessValue + precision);
+                adjustedTargetPosition = targetValue + (dampingCoeff * targetVelocity) / stiffnessValue;
             }
 
             float adjustedDisplacement = currentValue - adjustedTargetPosition;
@@ -172,7 +168,7 @@ namespace LitMotion
                 calculatedVelocity = coeffA * gammaMinus * FastExp(gammaMinus * deltaTime) +
                                     coeffB * gammaPlus * FastExp(gammaPlus * deltaTime);
             }
-            else if (math.abs(dampingRatio - 1.0f) < precision)
+            else if (math.abs(dampingRatio - 1.0f) < 1e-5f)
             {
                 // 临界阻尼
                 float coeffA = adjustedDisplacement;
@@ -354,7 +350,6 @@ namespace LitMotion
         /// <param name="targetVelocity">目标速度（到达目标位置时的期望速度）</param>
         /// <param name="dampingRatio">阻尼比 0.6 = Q弹 1 = 临界 1.2 = 稍缓</param>
         /// <param name="stiffness">弹簧刚度（实际上直接作为自然频率使用）5 = 1秒 10 = 0.5秒 16.5 = 0.2秒 </param>
-        /// <param name="precision">计算精度容差</param>
         /// <returns>新的位移值</returns>
         [BurstCompile]
         public static void SpringElastic(
@@ -364,17 +359,16 @@ namespace LitMotion
             in float4 targetValue,
             in float4 targetVelocity,
             in float dampingRatio = 0.5f,
-            in float stiffness = 1.0f,
-            in float precision = 1e-5f)
+            in float stiffness = 10.0f)
         {
             // 将stiffness参数重命名为naturalFreq进行内部计算
             float naturalFreq = stiffness;
             float stiffnessValue = naturalFreq * naturalFreq;  // 刚度值 = naturalFreq²
             float dampingHalf = dampingRatio * naturalFreq;
             float dampingCoeff = 2.0f * dampingHalf;  // 阻尼系数 = 2 * 阻尼比 * naturalFreq
-            float4 adjustedtargetValue = targetValue + (dampingCoeff * targetVelocity) / (stiffnessValue + precision);
+            float4 adjustedtargetValue = targetValue + (dampingCoeff * targetVelocity) / stiffnessValue;
 
-            if (math.abs(stiffnessValue - (dampingCoeff * dampingCoeff) / 4.0f) < precision) // Critically Damped
+            if (math.abs(dampingRatio - 1.0f) < 1e-5f) // Critically Damped
             {
                 float4 initialDisplacement = currentValue - adjustedtargetValue;
                 float4 initialVelocityWithDamping = currentVelocity + initialDisplacement * dampingHalf;
@@ -384,12 +378,12 @@ namespace LitMotion
                 currentValue = initialDisplacement * exponentialDecay + deltaTime * initialVelocityWithDamping * exponentialDecay + adjustedtargetValue;
                 currentVelocity = -dampingHalf * initialDisplacement * exponentialDecay - dampingHalf * deltaTime * initialVelocityWithDamping * exponentialDecay + initialVelocityWithDamping * exponentialDecay;
             }
-            else if (stiffnessValue - (dampingCoeff * dampingCoeff) / 4.0f > 0.0f) // Under Damped
+            else if (dampingRatio < 1.0f) // Under Damped
             {
                 float dampedFrequency = math.sqrt(stiffnessValue - (dampingCoeff * dampingCoeff) / 4.0f);
                 float4 displacementFromTarget = currentValue - adjustedtargetValue;
-                float4 amplitude = math.sqrt(Square(currentVelocity + dampingHalf * displacementFromTarget) / (dampedFrequency * dampedFrequency + precision) + Square(displacementFromTarget));
-                float4 phase = FastAtan((currentVelocity + displacementFromTarget * dampingHalf) / (-displacementFromTarget * dampedFrequency + precision));
+                float4 amplitude = math.sqrt(Square(currentVelocity + dampingHalf * displacementFromTarget) / (dampedFrequency * dampedFrequency) + Square(displacementFromTarget));
+                float4 phase = FastAtan((currentVelocity + displacementFromTarget * dampingHalf) / (-displacementFromTarget * dampedFrequency));
 
                 amplitude = math.select(-amplitude, amplitude, displacementFromTarget > 0.0f);
 
@@ -398,7 +392,7 @@ namespace LitMotion
                 currentValue = amplitude * exponentialDecay * math.cos(dampedFrequency * deltaTime + phase) + adjustedtargetValue;
                 currentVelocity = -dampingHalf * amplitude * exponentialDecay * math.cos(dampedFrequency * deltaTime + phase) - dampedFrequency * amplitude * exponentialDecay * math.sin(dampedFrequency * deltaTime + phase);
             }
-            else if (stiffnessValue - (dampingCoeff * dampingCoeff) / 4.0f < 0.0f) // Over Damped
+            else // Over Damped (dampingRatio > 1.0f)
             {
                 float fastDecayRate = (dampingCoeff + math.sqrt(dampingCoeff * dampingCoeff - 4f * stiffnessValue)) / 2.0f;
                 float slowDecayRate = (dampingCoeff - math.sqrt(dampingCoeff * dampingCoeff - 4f * stiffnessValue)) / 2.0f;
