@@ -1,5 +1,6 @@
 using System;
 using Unity.Burst;
+using Unity.Burst.CompilerServices;
 using Unity.Mathematics;
 using UnityEngine;
 using static Unity.Mathematics.math;
@@ -61,6 +62,12 @@ namespace LitMotion
             in float dampingRatio = 0.5f,
             in float stiffness = 10.0f)
         {
+            if (Hint.Unlikely(Approximately(currentValue, targetValue)))
+            {
+                currentValue = targetValue;
+                currentVelocity = 0.0f;
+                return;
+            }
             // 使用有意义的变量名，提高代码可读性
             float targetPosition = targetValue;
             float targetVel = targetVelocity;
@@ -325,6 +332,14 @@ namespace LitMotion
             in float4 targetValue,
             in float stiffness = 1.0f)
         {
+            // 检查是否已经收敛到目标值
+            if (Hint.Unlikely(Approximately(currentValue, targetValue)))
+            {
+                currentValue = targetValue;
+                currentVelocity = new float4(0.0f);
+                return;
+            }
+
             // SpringSimple是专门为临界阻尼设计的简化版本
             // 直接使用stiffness作为自然频率，阻尼系数的一半等于自然频率
             float naturalFreq = stiffness;
@@ -361,6 +376,14 @@ namespace LitMotion
             in float dampingRatio = 0.5f,
             in float stiffness = 10.0f)
         {
+            // 检查是否已经收敛到目标值
+            if (Hint.Unlikely(Approximately(currentValue, targetValue)))
+            {
+                currentValue = targetValue;
+                currentVelocity = new float4(0.0f);
+                return;
+            }
+
             // 将stiffness参数重命名为naturalFreq进行内部计算
             float naturalFreq = stiffness;
             float stiffnessValue = naturalFreq * naturalFreq;  // 刚度值 = naturalFreq²
@@ -513,7 +536,7 @@ namespace LitMotion
             in float stiffness = 1.0f)
         {
             float floatStiffness = 2.0f * stiffness;
-            
+
             // 第一层弹簧：从中间位置到目标位置
             // 直接修改intermediatePosition和intermediateVelocity
             SpringSimple(deltaTime, ref intermediatePosition, ref intermediateVelocity, targetValue, floatStiffness);
@@ -620,6 +643,31 @@ namespace LitMotion
         {
             // 快速指数函数近似，适用于 Burst
             return 1.0f / (1.0f - x + 0.5f * x * x - 0.1667f * x * x * x);
+        }
+        /// <summary>
+        /// 检查两个float值是否近似相等
+        /// </summary>
+        /// <param name="a">第一个值</param>
+        /// <param name="b">第二个值</param>
+        /// <param name="precision">精度阈值</param>
+        /// <returns>如果近似相等则返回true</returns>
+        [BurstCompile]
+        public static bool Approximately(in float a, in float b, in float precision = 1e-5f)
+        {
+            return math.abs(b - a) < math.max(1E-06f * math.max(math.abs(a), math.abs(b)), precision);
+        }
+
+        /// <summary>
+        /// 检查两个float4值是否近似相等
+        /// </summary>
+        /// <param name="a">第一个值</param>
+        /// <param name="b">第二个值</param>
+        /// <param name="precision">精度阈值</param>
+        /// <returns>如果所有维度都近似相等则返回true</returns>
+        [BurstCompile]
+        public static bool Approximately(in float4 a, in float4 b, in float precision = 1e-5f)
+        {
+            return math.all(math.abs(b - a) < math.max(1E-06f * math.max(math.abs(a), math.abs(b)), precision));
         }
     }
 }
