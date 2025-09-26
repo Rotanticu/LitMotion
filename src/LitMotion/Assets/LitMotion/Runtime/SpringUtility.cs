@@ -652,7 +652,7 @@ namespace LitMotion
         /// <param name="precision">精度阈值</param>
         /// <returns>如果近似相等则返回true</returns>
         [BurstCompile]
-        public static bool Approximately(in float a, in float b, in float precision = 1e-5f)
+        public static bool Approximately(in float a, in float b, in float precision = 1e-2f)
         {
             return math.abs(b - a) < math.max(1E-06f * math.max(math.abs(a), math.abs(b)), precision);
         }
@@ -665,7 +665,7 @@ namespace LitMotion
         /// <param name="precision">精度阈值</param>
         /// <returns>如果所有维度都近似相等则返回true</returns>
         [BurstCompile]
-        public static bool Approximately(in float4 a, in float4 b, in float precision = 1e-5f)
+        public static bool Approximately(in float4 a, in float4 b, in float precision = 1e-2f)
         {
             return math.all(math.abs(b - a) < math.max(1E-06f * math.max(math.abs(a), math.abs(b)), precision));
         }

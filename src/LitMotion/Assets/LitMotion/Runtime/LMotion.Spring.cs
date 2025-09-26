@@ -1,6 +1,6 @@
 using UnityEngine;
 using LitMotion.Adapters;
-
+using Unity.Mathematics;
 namespace LitMotion
 {
     public static partial class LMotion
@@ -18,10 +18,10 @@ namespace LitMotion
             /// <param name="duration">Duration</param>
             /// <param name="options">Spring options</param>
             /// <returns>Created motion builder</returns>
-            public static MotionBuilder<float, SpringOptions, FloatSpringMotionAdapter> Create(float startValue, float endValue, float duration, SpringOptions options)
+            public static MotionBuilder<float, SpringOptions, FloatSpringMotionAdapter> Create(float startValue, float endValue, SpringOptions options = default)
             {
-                options.CurrentValue.x = startValue;
-                return Create<float, SpringOptions, FloatSpringMotionAdapter>(startValue, endValue, duration)
+                options.Init(new float4(startValue, 0.0f, 0.0f, 0.0f), new float4(endValue, 0.0f, 0.0f, 0.0f));
+                return Create<float, SpringOptions, FloatSpringMotionAdapter>(startValue, endValue, 0.0f)
                     .WithOptions(options);
             }
 
@@ -33,10 +33,10 @@ namespace LitMotion
             /// <param name="duration">Duration</param>
             /// <param name="options">Spring options</param>
             /// <returns>Created motion builder</returns>
-            public static MotionBuilder<Vector2, SpringOptions, Vector2SpringMotionAdapter> Create(Vector2 startValue, Vector2 endValue, float duration, SpringOptions options)
+            public static MotionBuilder<Vector2, SpringOptions, Vector2SpringMotionAdapter> Create(Vector2 startValue, Vector2 endValue,SpringOptions options = default, Vector2 targetVelocity = default)
             {
-                options.CurrentValue.xy = startValue;
-                return Create<Vector2, SpringOptions, Vector2SpringMotionAdapter>(startValue, endValue, duration)
+                options.Init(new float4(startValue, 0.0f, 0.0f), new float4(endValue, 0.0f,0.0f));
+                return Create<Vector2, SpringOptions, Vector2SpringMotionAdapter>(startValue, endValue, 0.0f)
                     .WithOptions(options);
             }
 
@@ -48,10 +48,10 @@ namespace LitMotion
             /// <param name="duration">Duration</param>
             /// <param name="options">Spring options</param>
             /// <returns>Created motion builder</returns>
-            public static MotionBuilder<Vector3, SpringOptions, Vector3SpringMotionAdapter> Create(Vector3 startValue, Vector3 endValue, float duration, SpringOptions options)
+            public static MotionBuilder<Vector3, SpringOptions, Vector3SpringMotionAdapter> Create(Vector3 startValue, Vector3 endValue,SpringOptions options = default, Vector3 targetVelocity = default)
             {
-                options.CurrentValue.xyz = startValue;
-                return Create<Vector3, SpringOptions, Vector3SpringMotionAdapter>(startValue, endValue, duration)
+                options.Init(new float4(startValue, 0.0f), new float4(endValue, 0.0f));
+                return Create<Vector3, SpringOptions, Vector3SpringMotionAdapter>(startValue, endValue, 0.0f)
                     .WithOptions(options);
             }
 
@@ -63,10 +63,10 @@ namespace LitMotion
             /// <param name="duration">Duration</param>
             /// <param name="options">Spring options</param>
             /// <returns>Created motion builder</returns>
-            public static MotionBuilder<Vector4, SpringOptions, Vector4SpringMotionAdapter> Create(Vector4 startValue, Vector4 endValue, float duration, SpringOptions options)
+            public static MotionBuilder<Vector4, SpringOptions, Vector4SpringMotionAdapter> Create(Vector4 startValue, Vector4 endValue,SpringOptions options = default, Vector4 targetVelocity = default)
             {
-                options.CurrentValue.xyzw = startValue;
-                return Create<Vector4, SpringOptions, Vector4SpringMotionAdapter>(startValue, endValue, duration)
+                options.Init(new float4(startValue), new float4(endValue));
+                return Create<Vector4, SpringOptions, Vector4SpringMotionAdapter>(startValue, endValue, 0.0f)
                     .WithOptions(options);
             }
         }
