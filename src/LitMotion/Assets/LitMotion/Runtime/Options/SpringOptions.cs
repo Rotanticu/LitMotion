@@ -20,9 +20,13 @@ namespace LitMotion
         public float DampingRatio;
 
         /// <summary>
-        /// 默认构造函数，创建临界阻尼的Spring选项
+        /// Creates a new SpringOptions with specified parameters.
         /// </summary>
-        public SpringOptions(float stiffness = 10.0f, float dampingRatio = 1.0f,float4 startVelocity = default,float4 targetVelocity = default)
+        /// <param name="stiffness">Spring stiffness (higher = faster convergence)</param>
+        /// <param name="dampingRatio">Damping ratio (1.0 = critical damping)</param>
+        /// <param name="startVelocity">Initial velocity</param>
+        /// <param name="targetVelocity">Target velocity</param>
+        public SpringOptions(float stiffness = 10.0f, float dampingRatio = 1.0f, float4 startVelocity = default, float4 targetVelocity = default)
         {
             Stiffness = stiffness;
             DampingRatio = dampingRatio;
@@ -33,7 +37,10 @@ namespace LitMotion
             _startValue = new float4(0.0f, 0.0f, 0.0f, 0.0f);
             _startVelocity = startVelocity;
         }
-        //public CompleteMode CompleteMode;
+
+        /// <summary>
+        /// Critical damping configuration (fastest convergence without oscillation).
+        /// </summary>
         public static SpringOptions Critical
         {
             get
@@ -49,6 +56,9 @@ namespace LitMotion
             }
         }
 
+        /// <summary>
+        /// Overdamped configuration (smooth, slow convergence without oscillation).
+        /// </summary>
         public static SpringOptions Overdamped
         {
             get
@@ -64,6 +74,9 @@ namespace LitMotion
             }
         }
 
+        /// <summary>
+        /// Underdamped configuration (bouncy, oscillating motion before settling).
+        /// </summary>
         public static SpringOptions Underdamped
         {
             get
@@ -116,19 +129,4 @@ namespace LitMotion
         }
     }
 
-    public enum CompleteMode : byte
-    {
-        /// <summary>
-        /// 根据给出的持续时间计算出适当的刚度，只支持临界阻尼 
-        /// </summary>
-        DurationBased,
-        /// <summary>
-        /// 持续时间不定，收敛到阈值后结束。支持三种阻尼
-        /// </summary>
-        ConvergeToThreshold,
-        /// <summary>
-        /// 无线持续，必须手动结束。支持三种阻尼
-        /// </summary>
-        Infinite,
-    }
 }

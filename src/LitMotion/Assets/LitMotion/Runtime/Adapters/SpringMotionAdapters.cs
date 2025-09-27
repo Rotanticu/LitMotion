@@ -15,9 +15,7 @@ namespace LitMotion.Adapters
     {
         public float Evaluate(ref float startValue, ref float endValue, ref SpringOptions options, in MotionEvaluationContext context)
         {
-            ref float targetValue = ref options.TargetValue.x;
-            targetValue = endValue;
-            // 调用SpringElastic函数计算新的位置和速度
+            options.TargetValue.x = endValue;
             SpringUtility.SpringElastic(
                 (float)context.DeltaTime,
                 ref options.CurrentValue.x,
@@ -32,26 +30,21 @@ namespace LitMotion.Adapters
 
         public bool IsCompleted(ref float startValue, ref float endValue, ref SpringOptions options)
         {
-            // 使用阈值比较，避免精确相等比较的Burst问题
-            bool isCompleted = SpringUtility.Approximately(options.CurrentValue.x, options.TargetValue.x);
-
-            return isCompleted;
+            return SpringUtility.Approximately(options.CurrentValue.x, options.TargetValue.x);
         }
 
         public bool IsDurationBased => false;
     }
 
     /// <summary>
-    /// Vector2 Spring适配器，使用float4版本的SpringElastic方法
+    /// Spring motion adapter for Vector2 using float4 SpringElastic method.
     /// </summary>
     public readonly struct Vector2SpringMotionAdapter : IMotionAdapter<Vector2, SpringOptions>
     {
         public Vector2 Evaluate(ref Vector2 startValue, ref Vector2 endValue, ref SpringOptions options, in MotionEvaluationContext context)
         {
-            // 使用MotionEvaluationContext中的DeltaTime
             float deltaTime = (float)context.DeltaTime;
             options.TargetValue.xy = endValue;
-            // 使用float4版本的SpringElastic
             SpringUtility.SpringElastic(
                 deltaTime,
                 ref options.CurrentValue,
@@ -66,27 +59,21 @@ namespace LitMotion.Adapters
 
         public bool IsCompleted(ref Vector2 startValue, ref Vector2 endValue, ref SpringOptions options)
         {
-            // 检查是否收敛到目标值（使用阈值比较）
-            bool isCompleted = SpringUtility.Approximately(options.CurrentValue, options.TargetValue);
-            
-            return isCompleted;
+            return SpringUtility.Approximately(options.CurrentValue, options.TargetValue);
         }
 
         public bool IsDurationBased => false;
     }
 
     /// <summary>
-    /// Vector3 Spring适配器，使用float4版本的SpringElastic方法
+    /// Spring motion adapter for Vector3 using float4 SpringElastic method.
     /// </summary>
     public readonly struct Vector3SpringMotionAdapter : IMotionAdapter<Vector3, SpringOptions>
     {
         public Vector3 Evaluate(ref Vector3 startValue, ref Vector3 endValue, ref SpringOptions options, in MotionEvaluationContext context)
         {
-            // 使用MotionEvaluationContext中的DeltaTime
             float deltaTime = (float)context.DeltaTime;
-            ref float4 targetValue = ref options.TargetValue;
             options.TargetValue.xyz = endValue;
-            // 使用float4版本的SpringElastic
             SpringUtility.SpringElastic(
                 deltaTime,
                 ref options.CurrentValue,
@@ -101,27 +88,21 @@ namespace LitMotion.Adapters
 
         public bool IsCompleted(ref Vector3 startValue, ref Vector3 endValue, ref SpringOptions options)
         {
-            // 检查是否收敛到目标值（使用阈值比较）
-            bool isCompleted = SpringUtility.Approximately(options.CurrentValue, options.TargetValue);
-            
-            return isCompleted;
+            return SpringUtility.Approximately(options.CurrentValue, options.TargetValue);
         }
 
         public bool IsDurationBased => false;
     }
 
     /// <summary>
-    /// Vector4 Spring适配器，使用float4版本的SpringElastic方法
+    /// Spring motion adapter for Vector4 using float4 SpringElastic method.
     /// </summary>
     public readonly struct Vector4SpringMotionAdapter : IMotionAdapter<Vector4, SpringOptions>
     {
         public Vector4 Evaluate(ref Vector4 startValue, ref Vector4 endValue, ref SpringOptions options, in MotionEvaluationContext context)
         {
-            // 使用MotionEvaluationContext中的DeltaTime
             float deltaTime = (float)context.DeltaTime;
-            ref float4 targetValue = ref options.TargetValue;
-            targetValue = endValue;
-            // 使用float4版本的SpringElastic
+            options.TargetValue = endValue;
             SpringUtility.SpringElastic(
                 deltaTime,
                 ref options.CurrentValue,
@@ -137,8 +118,7 @@ namespace LitMotion.Adapters
 
         public bool IsCompleted(ref Vector4 startValue, ref Vector4 endValue, ref SpringOptions options)
         {
-            bool isCompleted = SpringUtility.Approximately(options.CurrentValue, options.TargetValue);
-            return isCompleted;
+            return SpringUtility.Approximately(options.CurrentValue, options.TargetValue);
         }
 
         public bool IsDurationBased => false;
