@@ -1,6 +1,5 @@
 using System;
 using Unity.Collections;
-using LitMotion.Collections;
 
 namespace LitMotion
 {
@@ -39,74 +38,19 @@ namespace LitMotion
     /// Options for string type motion.
     /// </summary>
     [Serializable]
-    public struct StringOptions : ITweenOptions, IEquatable<StringOptions>
+    public struct StringOptions : IMotionOptions, IEquatable<StringOptions>
     {
-        private TweenOption tweenOptions;
-        
-        // StringOptions特有的属性
-        public ScrambleMode ScrambleMode { get; set; }
-        public bool RichTextEnabled { get; set; }
-        public FixedString64Bytes CustomScrambleChars { get; set; }
-        public uint RandomSeed { get; set; }
-
-        // ITweenOptions接口实现 - 委托给tweenOptions
-        public long DurationNanos 
-        { 
-            get => tweenOptions.DurationNanos; 
-            set => tweenOptions.DurationNanos = value; 
-        }
-        
-        public int Loops 
-        { 
-            get => tweenOptions.Loops; 
-            set => tweenOptions.Loops = value; 
-        }
-        
-        public long DelayNanos 
-        { 
-            get => tweenOptions.DelayNanos; 
-            set => tweenOptions.DelayNanos = value; 
-        }
-        
-        public DelayType DelayType 
-        { 
-            get => tweenOptions.DelayType; 
-            set => tweenOptions.DelayType = value; 
-        }
-        
-        public LoopType LoopType 
-        { 
-            get => tweenOptions.LoopType; 
-            set => tweenOptions.LoopType = value; 
-        }
-        
-        public Ease Ease 
-        { 
-            get => tweenOptions.Ease; 
-            set => tweenOptions.Ease = value; 
-        }
-
-        #if LITMOTION_COLLECTIONS_2_0_OR_NEWER
-                public NativeAnimationCurve AnimationCurve 
-                { 
-                    get => tweenOptions.AnimationCurve; 
-                    set => tweenOptions.AnimationCurve = value; 
-                }
-        #else
-                public UnsafeAnimationCurve AnimationCurve 
-                { 
-                    get => tweenOptions.AnimationCurve; 
-                    set => tweenOptions.AnimationCurve = value; 
-                }
-        #endif
+        public ScrambleMode ScrambleMode;
+        public bool RichTextEnabled;
+        public FixedString64Bytes CustomScrambleChars;
+        public uint RandomSeed;
 
         public readonly bool Equals(StringOptions other)
         {
-            return tweenOptions.Equals(other.tweenOptions) 
-                && ScrambleMode == other.ScrambleMode
-                && RichTextEnabled == other.RichTextEnabled
-                && CustomScrambleChars == other.CustomScrambleChars
-                && RandomSeed == other.RandomSeed;
+            return other.ScrambleMode == ScrambleMode &&
+                other.RichTextEnabled == RichTextEnabled &&
+                other.CustomScrambleChars == CustomScrambleChars &&
+                other.RandomSeed == RandomSeed;
         }
 
         public override readonly bool Equals(object obj)
@@ -117,7 +61,7 @@ namespace LitMotion
 
         public override readonly int GetHashCode()
         {
-            return HashCode.Combine(tweenOptions, ScrambleMode, RichTextEnabled, CustomScrambleChars, RandomSeed);
+            return HashCode.Combine(ScrambleMode, RichTextEnabled, CustomScrambleChars, RandomSeed);
         }
     }
 }

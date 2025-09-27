@@ -17,20 +17,10 @@ namespace LitMotion
             /// <param name="strength">Vibration strength</param>
             /// <param name="duration">Duration</param>
             /// <returns>Created motion builder</returns>
-            public static MotionBuilder<float, float, PunchOptions, TweenAnimationSpec<float, PunchOptions>> Create(float startValue, float strength, float duration)
+            public static MotionBuilder<float, PunchOptions, FloatPunchMotionAdapter> Create(float startValue, float strength, float duration)
             {
-                var options = new PunchOptions
-                {
-                    DurationNanos = (long)(duration * AnimationConstants.SecondsToNanos),
-                    Loops = 1,
-                    DelayNanos = 0,
-                    DelayType = DelayType.FirstLoop,
-                    LoopType = LoopType.Restart,
-                    Ease = Ease.Linear,
-                    Frequency = 10,
-                    DampingRatio = 1f
-                };
-                return Create<float, float, PunchOptions, TweenAnimationSpec<float, PunchOptions>>(startValue, startValue, options);
+                return Create<float, PunchOptions, FloatPunchMotionAdapter>(startValue, strength, duration)
+                    .WithOptions(PunchOptions.Default);
             }
 
             /// <summary>
@@ -40,20 +30,10 @@ namespace LitMotion
             /// <param name="strength">Vibration strength</param>
             /// <param name="duration">Duration</param>
             /// <returns>Created motion builder</returns>
-            public static MotionBuilder<Vector2, Vector2, PunchOptions, TweenAnimationSpec<Vector2, PunchOptions>> Create(Vector2 startValue, Vector2 strength, float duration)
+            public static MotionBuilder<Vector2, PunchOptions, Vector2PunchMotionAdapter> Create(Vector2 startValue, Vector2 strength, float duration)
             {
-                var options = new PunchOptions
-                {
-                    DurationNanos = (long)(duration * AnimationConstants.SecondsToNanos),
-                    Loops = 1,
-                    DelayNanos = 0,
-                    DelayType = DelayType.FirstLoop,
-                    LoopType = LoopType.Restart,
-                    Ease = Ease.Linear,
-                    Frequency = 10,
-                    DampingRatio = 1f
-                };
-                return Create<Vector2, Vector2, PunchOptions, TweenAnimationSpec<Vector2, PunchOptions>>(startValue, startValue, options);
+                return Create<Vector2, PunchOptions, Vector2PunchMotionAdapter>(startValue, strength, duration)
+                    .WithOptions(PunchOptions.Default);
             }
 
             /// <summary>
@@ -63,20 +43,10 @@ namespace LitMotion
             /// <param name="strength">Vibration strength</param>
             /// <param name="duration">Duration</param>
             /// <returns>Created motion builder</returns>
-            public static MotionBuilder<Vector3, Vector3, PunchOptions, TweenAnimationSpec<Vector3, PunchOptions>> Create(Vector3 startValue, Vector3 strength, float duration)
+            public static MotionBuilder<Vector3, PunchOptions, Vector3PunchMotionAdapter> Create(Vector3 startValue, Vector3 strength, float duration)
             {
-                var options = new PunchOptions
-                {
-                    DurationNanos = (long)(duration * AnimationConstants.SecondsToNanos),
-                    Loops = 1,
-                    DelayNanos = 0,
-                    DelayType = DelayType.FirstLoop,
-                    LoopType = LoopType.Restart,
-                    Ease = Ease.Linear,
-                    Frequency = 10,
-                    DampingRatio = 1f
-                };
-                return Create<Vector3, Vector3, PunchOptions, TweenAnimationSpec<Vector3, PunchOptions>>(startValue, startValue, options);
+                return Create<Vector3, PunchOptions, Vector3PunchMotionAdapter>(startValue, strength, duration)
+                    .WithOptions(PunchOptions.Default);
             }
         }
     }

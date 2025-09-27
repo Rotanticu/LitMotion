@@ -19,11 +19,10 @@ namespace LitMotion.Extensions
         /// <typeparam name="TAdapter">The type of adapter that support value animation</typeparam>
         /// <param name="builder">This builder</param>
         /// <returns>Handle of the created motion data.</returns>
-        public static MotionHandle BindToUnityLogger<TValue, VValue, TOptions, TAnimationSpec>(this MotionBuilder<TValue, VValue, TOptions, TAnimationSpec> builder)
+        public static MotionHandle BindToUnityLogger<TValue, TOptions, TAdapter>(this MotionBuilder<TValue, TOptions, TAdapter> builder)
             where TValue : unmanaged
-            where VValue : unmanaged
-            where TOptions : unmanaged, ITweenOptions
-            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<VValue, TOptions>
+            where TOptions : unmanaged, IMotionOptions
+            where TAdapter : unmanaged, IMotionAdapter<TValue, TOptions>
         {
             return builder.Bind(static x => Debug.unityLogger.Log(x));
         }
@@ -37,11 +36,10 @@ namespace LitMotion.Extensions
         /// <param name="builder">This builder</param>
         /// <param name="format">Log format</param>
         /// <returns>Handle of the created motion data.</returns>
-        public static MotionHandle BindToUnityLogger<TValue, VValue, TOptions, TAnimationSpec>(this MotionBuilder<TValue, VValue, TOptions, TAnimationSpec> builder, string format)
+        public static MotionHandle BindToUnityLogger<TValue, TOptions, TAdapter>(this MotionBuilder<TValue, TOptions, TAdapter> builder, string format)
             where TValue : unmanaged
-            where VValue : unmanaged
-            where TOptions : unmanaged, ITweenOptions
-            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<VValue, TOptions>
+            where TOptions : unmanaged, IMotionOptions
+            where TAdapter : unmanaged, IMotionAdapter<TValue, TOptions>
         {
             return builder.Bind(format, static (x, format) => 
             {
@@ -62,11 +60,10 @@ namespace LitMotion.Extensions
         /// <typeparam name="TAdapter">The type of adapter that support value animation</typeparam>
         /// <param name="builder">This builder</param>
         /// <returns>Handle of the created motion data.</returns>
-        public static MotionHandle BindToUnityLogger<TValue, VValue, TOptions, TAnimationSpec>(this MotionBuilder<TValue, VValue, TOptions, TAnimationSpec> builder, ILogger logger)
+        public static MotionHandle BindToUnityLogger<TValue, TOptions, TAdapter>(this MotionBuilder<TValue, TOptions, TAdapter> builder, ILogger logger)
             where TValue : unmanaged
-            where VValue : unmanaged
-            where TOptions : unmanaged, ITweenOptions
-            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<VValue, TOptions>
+            where TOptions : unmanaged, IMotionOptions
+            where TAdapter : unmanaged, IMotionAdapter<TValue, TOptions>
         {
             Error.IsNull(logger);
             return builder.Bind(logger, static (x, logger) => logger.Log(x));
@@ -82,11 +79,10 @@ namespace LitMotion.Extensions
         /// <param name="logger">Logger</param>
         /// <param name="format">Log format</param>
         /// <returns>Handle of the created motion data.</returns>
-        public static MotionHandle BindToUnityLogger<TValue, VValue, TOptions, TAnimationSpec>(this MotionBuilder<TValue, VValue, TOptions, TAnimationSpec> builder, ILogger logger, string format)
+        public static MotionHandle BindToUnityLogger<TValue, TOptions, TAdapter>(this MotionBuilder<TValue, TOptions, TAdapter> builder, ILogger logger, string format)
             where TValue : unmanaged
-            where VValue : unmanaged
-            where TOptions : unmanaged, ITweenOptions
-            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<VValue, TOptions>
+            where TOptions : unmanaged, IMotionOptions
+            where TAdapter : unmanaged, IMotionAdapter<TValue, TOptions>
         {
             Error.IsNull(logger);
             return builder.Bind(logger, format, static (x, logger, format) =>

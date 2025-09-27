@@ -146,9 +146,12 @@ namespace LitMotion.Editor
                 var selected = treeView.state.selectedIDs;
                 if (selected.Count > 0 && treeView.CurrentBindingItems.FirstOrDefault(x => x.id == selected[0]) is MotionDebuggerViewItem item)
                 {
-                    ref var state = ref MotionManager.GetStateRef(item.Handle, false);
+                    ref var dataRef = ref MotionManager.GetDataRef(item.Handle, false);
                     ref var managedDataRef = ref MotionManager.GetManagedDataRef(item.Handle, false);
                     var debugInfo = MotionManager.GetDebugInfo(item.Handle);
+
+                    ref var state = ref dataRef.State;
+                    ref var parameters = ref dataRef.Parameters;
 
                     using (new EditorGUILayout.VerticalScope(GUI.skin.box))
                     {
@@ -172,19 +175,19 @@ namespace LitMotion.Editor
                         GenericField("Start Value", debugInfo.StartValue);
                         GenericField("End Value", debugInfo.EndValue);
 
-                        // EditorGUILayout.Space(4);
-                        // GenericField("Duration", parameters.Duration);
-                        // GenericField("Delay", parameters.Delay);
-                        // GenericField("Delay Type", parameters.DelayType);
-                        // GenericField("Loops", parameters.Loops);
-                        // GenericField("Loop Type", parameters.LoopType);
+                        EditorGUILayout.Space(4);
+                        GenericField("Duration", parameters.Duration);
+                        GenericField("Delay", parameters.Delay);
+                        GenericField("Delay Type", parameters.DelayType);
+                        GenericField("Loops", parameters.Loops);
+                        GenericField("Loop Type", parameters.LoopType);
 
-                        // EditorGUILayout.Space(4);
-                        // GenericField("Ease", parameters.Ease);
-                        // if (parameters.Ease is Ease.CustomAnimationCurve)
-                        // {
-                        //     GenericField("Custom Ease Curve", parameters.AnimationCurve);
-                        // }
+                        EditorGUILayout.Space(4);
+                        GenericField("Ease", parameters.Ease);
+                        if (parameters.Ease is Ease.CustomAnimationCurve)
+                        {
+                            GenericField("Custom Ease Curve", parameters.AnimationCurve);
+                        }
 
                         EditorGUILayout.Space(4);
                         GenericField("Cancel On Error", managedDataRef.CancelOnError);

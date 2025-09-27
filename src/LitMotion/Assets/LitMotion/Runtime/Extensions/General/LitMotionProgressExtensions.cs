@@ -16,11 +16,10 @@ namespace LitMotion.Extensions
         /// <param name="builder">This builder</param>
         /// <param name="progress">Target object that implements IProgress</param>
         /// <returns>Handle of the created motion data.</returns>
-        public static MotionHandle BindToProgress<TValue, VValue, TOptions, TAnimationSpec>(this MotionBuilder<TValue, VValue, TOptions, TAnimationSpec> builder, IProgress<TValue> progress)
+        public static MotionHandle BindToProgress<TValue, TOptions, TAdapter>(this MotionBuilder<TValue, TOptions, TAdapter> builder, IProgress<TValue> progress)
             where TValue : unmanaged
-            where VValue : unmanaged
-            where TOptions : unmanaged, ITweenOptions
-            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<VValue, TOptions>
+            where TOptions : unmanaged, IMotionOptions
+            where TAdapter : unmanaged, IMotionAdapter<TValue, TOptions>
         {
             Error.IsNull(progress);
             return builder.Bind(progress, static (x, progress) => progress.Report(x));

@@ -1,5 +1,4 @@
 using System;
-using LitMotion.Collections;
 
 namespace LitMotion
 {
@@ -7,65 +6,11 @@ namespace LitMotion
     /// Options for shake motion.
     /// </summary>
     [Serializable]
-    public struct ShakeOptions : ITweenOptions, IEquatable<ShakeOptions>
+    public struct ShakeOptions : IEquatable<ShakeOptions>, IMotionOptions
     {
-        private TweenOption tweenOptions;
-        
-        // ShakeOptions特有的属性
-        public int Frequency { get; set; }
-        public float DampingRatio { get; set; }
-        public uint RandomSeed { get; set; }
-
-        // ITweenOptions接口实现 - 委托给tweenOptions
-        public long DurationNanos 
-        { 
-            get => tweenOptions.DurationNanos; 
-            set => tweenOptions.DurationNanos = value; 
-        }
-        
-        public int Loops 
-        { 
-            get => tweenOptions.Loops; 
-            set => tweenOptions.Loops = value; 
-        }
-        
-        public long DelayNanos 
-        { 
-            get => tweenOptions.DelayNanos; 
-            set => tweenOptions.DelayNanos = value; 
-        }
-        
-        public DelayType DelayType 
-        { 
-            get => tweenOptions.DelayType; 
-            set => tweenOptions.DelayType = value; 
-        }
-        
-        public LoopType LoopType 
-        { 
-            get => tweenOptions.LoopType; 
-            set => tweenOptions.LoopType = value; 
-        }
-        
-        public Ease Ease 
-        { 
-            get => tweenOptions.Ease; 
-            set => tweenOptions.Ease = value; 
-        }
-
-        #if LITMOTION_COLLECTIONS_2_0_OR_NEWER
-                public NativeAnimationCurve AnimationCurve 
-                { 
-                    get => tweenOptions.AnimationCurve; 
-                    set => tweenOptions.AnimationCurve = value; 
-                }
-        #else
-                public UnsafeAnimationCurve AnimationCurve 
-                { 
-                    get => tweenOptions.AnimationCurve; 
-                    set => tweenOptions.AnimationCurve = value; 
-                }
-        #endif
+        public int Frequency;
+        public float DampingRatio;
+        public uint RandomSeed;
 
         public static ShakeOptions Default
         {
@@ -81,10 +26,9 @@ namespace LitMotion
 
         public readonly bool Equals(ShakeOptions other)
         {
-            return tweenOptions.Equals(other.tweenOptions) 
-                && Frequency == other.Frequency 
-                && DampingRatio == other.DampingRatio
-                && RandomSeed == other.RandomSeed;
+            return other.Frequency == Frequency &&
+                other.DampingRatio == DampingRatio &&
+                other.RandomSeed == RandomSeed;
         }
 
         public override readonly bool Equals(object obj)
@@ -95,7 +39,7 @@ namespace LitMotion
 
         public override readonly int GetHashCode()
         {
-            return HashCode.Combine(tweenOptions, Frequency, DampingRatio, RandomSeed);
+            return HashCode.Combine(Frequency, DampingRatio, RandomSeed);
         }
     }
 }

@@ -15,9 +15,9 @@ namespace LitMotion.Extensions
         /// <param name="builder">This builder</param>
         /// <param name="transform"></param>
         /// <returns>Handle of the created motion data.</returns>
-        public static MotionHandle BindToMaterialFloat<TOptions, TAnimationSpec>(this MotionBuilder<float, float, TOptions, TAnimationSpec> builder, Material material, string name)
-            where TOptions : unmanaged, ITweenOptions
-            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<float, TOptions>
+        public static MotionHandle BindToMaterialFloat<TOptions, TAdapter>(this MotionBuilder<float, TOptions, TAdapter> builder, Material material, string name)
+            where TOptions : unmanaged, IMotionOptions
+            where TAdapter : unmanaged, IMotionAdapter<float, TOptions>
         {
             Error.IsNull(material);
             return builder.Bind(material, name, static (x, material, name) =>
@@ -34,9 +34,9 @@ namespace LitMotion.Extensions
         /// <param name="builder">This builder</param>
         /// <param name="transform"></param>
         /// <returns>Handle of the created motion data.</returns>
-        public static MotionHandle BindToMaterialFloat<TOptions, TAnimationSpec>(this MotionBuilder<float, float, TOptions, TAnimationSpec> builder, Material material, int nameID)
-            where TOptions : unmanaged, ITweenOptions
-            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<float, TOptions>
+        public static MotionHandle BindToMaterialFloat<TOptions, TAdapter>(this MotionBuilder<float, TOptions, TAdapter> builder, Material material, int nameID)
+            where TOptions : unmanaged, IMotionOptions
+            where TAdapter : unmanaged, IMotionAdapter<float, TOptions>
         {
             Error.IsNull(material);
             return builder.Bind(material, Box.Create(nameID), static (x, material, nameID) =>
@@ -53,9 +53,9 @@ namespace LitMotion.Extensions
         /// <param name="builder">This builder</param>
         /// <param name="transform"></param>
         /// <returns>Handle of the created motion data.</returns>
-        public static MotionHandle BindToMaterialInt<TOptions, TAnimationSpec>(this MotionBuilder<int, int, TOptions, TAnimationSpec> builder, Material material, string name)
-            where TOptions : unmanaged, ITweenOptions
-            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<int, TOptions>
+        public static MotionHandle BindToMaterialInt<TOptions, TAdapter>(this MotionBuilder<int, TOptions, TAdapter> builder, Material material, string name)
+            where TOptions : unmanaged, IMotionOptions
+            where TAdapter : unmanaged, IMotionAdapter<int, TOptions>
         {
             Error.IsNull(material);
             return builder.Bind(material, name, static (x, material, name) =>
@@ -72,9 +72,9 @@ namespace LitMotion.Extensions
         /// <param name="builder">This builder</param>
         /// <param name="transform"></param>
         /// <returns>Handle of the created motion data.</returns>
-        public static MotionHandle BindToMaterialInt<TOptions, TAnimationSpec>(this MotionBuilder<int, int, TOptions, TAnimationSpec> builder, Material material, int nameID)
-            where TOptions : unmanaged, ITweenOptions
-            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<int, TOptions>
+        public static MotionHandle BindToMaterialInt<TOptions, TAdapter>(this MotionBuilder<int, TOptions, TAdapter> builder, Material material, int nameID)
+            where TOptions : unmanaged, IMotionOptions
+            where TAdapter : unmanaged, IMotionAdapter<int, TOptions>
         {
             Error.IsNull(material);
             return builder.Bind(material, Box.Create(nameID), static (x, material, nameID) =>
@@ -91,9 +91,9 @@ namespace LitMotion.Extensions
         /// <param name="builder">This builder</param>
         /// <param name="transform"></param>
         /// <returns>Handle of the created motion data.</returns>
-        public static MotionHandle BindToMaterialColor<TOptions, TAnimationSpec>(this MotionBuilder<Color, Color, TOptions, TAnimationSpec> builder, Material material, string name)
-            where TOptions : unmanaged, ITweenOptions
-            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<Color, TOptions>
+        public static MotionHandle BindToMaterialColor<TOptions, TAdapter>(this MotionBuilder<Color, TOptions, TAdapter> builder, Material material, string name)
+            where TOptions : unmanaged, IMotionOptions
+            where TAdapter : unmanaged, IMotionAdapter<Color, TOptions>
         {
             Error.IsNull(material);
             return builder.Bind(material, name, static (x, material, name) =>
@@ -110,9 +110,9 @@ namespace LitMotion.Extensions
         /// <param name="builder">This builder</param>
         /// <param name="transform"></param>
         /// <returns>Handle of the created motion data.</returns>
-        public static MotionHandle BindToMaterialColor<TOptions, TAnimationSpec>(this MotionBuilder<Color, Color, TOptions, TAnimationSpec> builder, Material material, int nameID)
-            where TOptions : unmanaged, ITweenOptions
-            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<Color, TOptions>
+        public static MotionHandle BindToMaterialColor<TOptions, TAdapter>(this MotionBuilder<Color, TOptions, TAdapter> builder, Material material, int nameID)
+            where TOptions : unmanaged, IMotionOptions
+            where TAdapter : unmanaged, IMotionAdapter<Color, TOptions>
         {
             Error.IsNull(material);
             return builder.Bind(material, Box.Create(nameID), static (x, material, nameID) =>

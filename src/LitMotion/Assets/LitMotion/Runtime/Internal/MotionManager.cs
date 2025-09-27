@@ -10,22 +10,20 @@ namespace LitMotion
 
         public static int MotionTypeCount { get; private set; }
 
-        public static void Register<TValue, VValue, TOptions, TAnimationSpec>(
-            MotionStorage<TValue, VValue, TOptions, TAnimationSpec> storage)
+        public static void Register<TValue, TOptions, TAdapter>(MotionStorage<TValue, TOptions, TAdapter> storage)
             where TValue : unmanaged
-            where VValue : unmanaged
             where TOptions : unmanaged, IMotionOptions
-            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<VValue, TOptions>
+            where TAdapter : unmanaged, IMotionAdapter<TValue, TOptions>
         {
             list.Add(storage);
             MotionTypeCount++;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ref AnimationState GetStateRef(MotionHandle handle, bool checkIsInSequence = true)
+        public static ref MotionData GetDataRef(MotionHandle handle, bool checkIsInSequence = true)
         {
             CheckTypeId(handle);
-            return ref list[handle.StorageId].GetStateRef(handle, checkIsInSequence);
+            return ref list[handle.StorageId].GetDataRef(handle, checkIsInSequence);
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref MotionData<TValue, TOptions> GetTypeDataRef<TValue, TOptions>(MotionHandle handle, bool checkIsInSequence = true)

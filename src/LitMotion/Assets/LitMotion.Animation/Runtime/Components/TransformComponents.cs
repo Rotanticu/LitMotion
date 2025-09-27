@@ -5,9 +5,9 @@ using UnityEngine;
 
 namespace LitMotion.Animation.Components
 {
-    public abstract class TransformPositionAnimationBase<TOptions, TAnimationSpec> : PropertyAnimationComponent<Transform, Vector3, Vector3, TOptions, TAnimationSpec>
-        where TOptions : unmanaged, ITweenOptions
-        where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<Vector3, TOptions>
+    public abstract class TransformPositionAnimationBase<TOptions, TAdapter> : PropertyAnimationComponent<Transform, Vector3, TOptions, TAdapter>
+        where TOptions : unmanaged, IMotionOptions
+        where TAdapter : unmanaged, IMotionAdapter<Vector3, TOptions>
     {
         [SerializeField] bool useWorldSpace;
 
@@ -30,19 +30,19 @@ namespace LitMotion.Animation.Components
 
     [Serializable]
     [LitMotionAnimationComponentMenu("Transform/Position")]
-    public sealed class TransformPositionAnimation : TransformPositionAnimationBase<TweenOption, TweenAnimationSpec<Vector3, TweenOption>> { }
+    public sealed class TransformPositionAnimation : TransformPositionAnimationBase<NoOptions, Vector3MotionAdapter> { }
 
     [Serializable]
     [LitMotionAnimationComponentMenu("Transform/Position (Punch)")]
-    public sealed class TransformPositionPunchAnimation : TransformPositionAnimationBase<PunchOptions, TweenAnimationSpec<Vector3, PunchOptions>> { }
+    public sealed class TransformPositionPunchAnimation : TransformPositionAnimationBase<PunchOptions, Vector3PunchMotionAdapter> { }
 
     [Serializable]
     [LitMotionAnimationComponentMenu("Transform/Position (Shake)")]
-    public sealed class TransformPositionShakeAnimation : TransformPositionAnimationBase<ShakeOptions, TweenAnimationSpec<Vector3, ShakeOptions>> { }
+    public sealed class TransformPositionShakeAnimation : TransformPositionAnimationBase<ShakeOptions, Vector3ShakeMotionAdapter> { }
 
-    public abstract class TransformRotationAnimationBase<TOptions, TAnimationSpec> : PropertyAnimationComponent<Transform, Vector3, Vector3, TOptions, TAnimationSpec>
-        where TOptions : unmanaged, ITweenOptions
-        where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<Vector3, TOptions>
+    public abstract class TransformRotationAnimationBase<TOptions, TAdapter> : PropertyAnimationComponent<Transform, Vector3, TOptions, TAdapter>
+        where TOptions : unmanaged, IMotionOptions
+        where TAdapter : unmanaged, IMotionAdapter<Vector3, TOptions>
     {
         [SerializeField] bool useWorldSpace;
 
@@ -65,19 +65,19 @@ namespace LitMotion.Animation.Components
 
     [Serializable]
     [LitMotionAnimationComponentMenu("Transform/Rotation")]
-    public sealed class TransformRotationAnimation : TransformRotationAnimationBase<TweenOption, TweenAnimationSpec<Vector3, TweenOption>> { }
+    public sealed class TransformRotationAnimation : TransformRotationAnimationBase<NoOptions, Vector3MotionAdapter> { }
 
     [Serializable]
     [LitMotionAnimationComponentMenu("Transform/Rotation (Punch)")]
-    public sealed class TransformRotationPunchAnimation : TransformRotationAnimationBase<PunchOptions, TweenAnimationSpec<Vector3, PunchOptions>> { }
+    public sealed class TransformRotationPunchAnimation : TransformRotationAnimationBase<PunchOptions, Vector3PunchMotionAdapter> { }
 
     [Serializable]
     [LitMotionAnimationComponentMenu("Transform/Rotation (Shake)")]
-    public sealed class TransformRotationShakeAnimation : TransformRotationAnimationBase<ShakeOptions, TweenAnimationSpec<Vector3, ShakeOptions>> { }
+    public sealed class TransformRotationShakeAnimation : TransformRotationAnimationBase<ShakeOptions, Vector3ShakeMotionAdapter> { }
 
-    public abstract class TransformScaleAnimationBase<TOptions, TAnimationSpec> : PropertyAnimationComponent<Transform, Vector3, Vector3, TOptions, TAnimationSpec>
-        where TOptions : unmanaged, ITweenOptions
-        where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<Vector3, TOptions>
+    public abstract class TransformScaleAnimationBase<TOptions, TAdapter> : PropertyAnimationComponent<Transform, Vector3, TOptions, TAdapter>
+        where TOptions : unmanaged, IMotionOptions
+        where TAdapter : unmanaged, IMotionAdapter<Vector3, TOptions>
     {
         protected override Vector3 GetValue(Transform target)
         {
@@ -97,13 +97,13 @@ namespace LitMotion.Animation.Components
 
     [Serializable]
     [LitMotionAnimationComponentMenu("Transform/Scale")]
-    public sealed class TransformScaleAnimation : TransformScaleAnimationBase<TweenOption, TweenAnimationSpec<Vector3, TweenOption>> { }
+    public sealed class TransformScaleAnimation : TransformScaleAnimationBase<NoOptions, Vector3MotionAdapter> { }
 
     [Serializable]
     [LitMotionAnimationComponentMenu("Transform/Scale (Punch)")]
-    public sealed class TransformScalePunchAnimation : TransformScaleAnimationBase<PunchOptions, TweenAnimationSpec<Vector3, PunchOptions>> { }
+    public sealed class TransformScalePunchAnimation : TransformScaleAnimationBase<PunchOptions, Vector3PunchMotionAdapter> { }
 
     [Serializable]
     [LitMotionAnimationComponentMenu("Transform/Scale (Shake)")]
-    public sealed class TransformScaleShakeAnimation : TransformScaleAnimationBase<ShakeOptions, TweenAnimationSpec<Vector3, ShakeOptions>> { }
+    public sealed class TransformScaleShakeAnimation : TransformScaleAnimationBase<ShakeOptions, Vector3ShakeMotionAdapter> { }
 }

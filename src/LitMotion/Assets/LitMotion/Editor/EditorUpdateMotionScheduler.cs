@@ -6,13 +6,12 @@ namespace LitMotion.Editor
     {
         public double Time => EditorApplication.timeSinceStartup;
 
-        public MotionHandle Schedule<TValue, VValue, TOptions, TAnimationSpec>(ref MotionBuilder<TValue, VValue, TOptions, TAnimationSpec> builder)
+        public MotionHandle Schedule<TValue, TOptions, TAdapter>(ref MotionBuilder<TValue, TOptions, TAdapter> builder)
             where TValue : unmanaged
-            where VValue : unmanaged
-            where TOptions : unmanaged, ITweenOptions
-            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<VValue, TOptions>
+            where TOptions : unmanaged, IMotionOptions
+            where TAdapter : unmanaged, IMotionAdapter<TValue, TOptions>
         {
-            return EditorMotionDispatcher.Schedule<TValue, VValue, TOptions, TAnimationSpec>(ref builder);
+            return EditorMotionDispatcher.Schedule(ref builder);
         }
     }
 }

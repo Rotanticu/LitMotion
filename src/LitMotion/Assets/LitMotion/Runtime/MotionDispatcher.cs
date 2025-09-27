@@ -14,22 +14,21 @@ namespace LitMotion
     /// </summary>
     public static class MotionDispatcher
     {
-        static class StorageCache<TValue, VValue, TOptions, TAnimationSpec>
+        static class StorageCache<TValue, TOptions, TAdapter>
             where TValue : unmanaged
-            where VValue : unmanaged
             where TOptions : unmanaged, IMotionOptions
-            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<VValue, TOptions>
+            where TAdapter : unmanaged, IMotionAdapter<TValue, TOptions>
         {
-            public static MotionStorage<TValue, VValue, TOptions, TAnimationSpec> initialization;
-            public static MotionStorage<TValue, VValue, TOptions, TAnimationSpec> earlyUpdate;
-            public static MotionStorage<TValue, VValue, TOptions, TAnimationSpec> fixedUpdate;
-            public static MotionStorage<TValue, VValue, TOptions, TAnimationSpec> preUpdate;
-            public static MotionStorage<TValue, VValue, TOptions, TAnimationSpec> update;
-            public static MotionStorage<TValue, VValue, TOptions, TAnimationSpec> preLateUpdate;
-            public static MotionStorage<TValue, VValue, TOptions, TAnimationSpec> postLateUpdate;
-            public static MotionStorage<TValue, VValue, TOptions, TAnimationSpec> timeUpdate;
+            public static MotionStorage<TValue, TOptions, TAdapter> initialization;
+            public static MotionStorage<TValue, TOptions, TAdapter> earlyUpdate;
+            public static MotionStorage<TValue, TOptions, TAdapter> fixedUpdate;
+            public static MotionStorage<TValue, TOptions, TAdapter> preUpdate;
+            public static MotionStorage<TValue, TOptions, TAdapter> update;
+            public static MotionStorage<TValue, TOptions, TAdapter> preLateUpdate;
+            public static MotionStorage<TValue, TOptions, TAdapter> postLateUpdate;
+            public static MotionStorage<TValue, TOptions, TAdapter> timeUpdate;
 
-            public static MotionStorage<TValue, VValue, TOptions, TAnimationSpec> GetOrCreate(PlayerLoopTiming playerLoopTiming)
+            public static MotionStorage<TValue, TOptions, TAdapter> GetOrCreate(PlayerLoopTiming playerLoopTiming)
             {
                 return playerLoopTiming switch
                 {
@@ -46,33 +45,32 @@ namespace LitMotion
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            static MotionStorage<TValue, VValue, TOptions, TAnimationSpec> CreateIfNull(ref MotionStorage<TValue, VValue, TOptions, TAnimationSpec> storage)
+            static MotionStorage<TValue, TOptions, TAdapter> CreateIfNull(ref MotionStorage<TValue, TOptions, TAdapter> storage)
             {
                 if (storage == null)
                 {
-                    storage = new MotionStorage<TValue, VValue, TOptions, TAnimationSpec>(MotionManager.MotionTypeCount);
+                    storage = new MotionStorage<TValue, TOptions, TAdapter>(MotionManager.MotionTypeCount);
                     MotionManager.Register(storage);
                 }
                 return storage;
             }
         }
 
-        static class RunnerCache<TValue, VValue, TOptions, TAnimationSpec>
+        static class RunnerCache<TValue, TOptions, TAdapter>
             where TValue : unmanaged
-            where VValue : unmanaged
             where TOptions : unmanaged, IMotionOptions
-            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<VValue, TOptions>
+            where TAdapter : unmanaged, IMotionAdapter<TValue, TOptions>
         {
-            public static UpdateRunner<TValue, VValue, TOptions, TAnimationSpec> initialization;
-            public static UpdateRunner<TValue, VValue, TOptions, TAnimationSpec> earlyUpdate;
-            public static UpdateRunner<TValue, VValue, TOptions, TAnimationSpec> fixedUpdate;
-            public static UpdateRunner<TValue, VValue, TOptions, TAnimationSpec> preUpdate;
-            public static UpdateRunner<TValue, VValue, TOptions, TAnimationSpec> update;
-            public static UpdateRunner<TValue, VValue, TOptions, TAnimationSpec> preLateUpdate;
-            public static UpdateRunner<TValue, VValue, TOptions, TAnimationSpec> postLateUpdate;
-            public static UpdateRunner<TValue, VValue, TOptions, TAnimationSpec> timeUpdate;
+            public static UpdateRunner<TValue, TOptions, TAdapter> initialization;
+            public static UpdateRunner<TValue, TOptions, TAdapter> earlyUpdate;
+            public static UpdateRunner<TValue, TOptions, TAdapter> fixedUpdate;
+            public static UpdateRunner<TValue, TOptions, TAdapter> preUpdate;
+            public static UpdateRunner<TValue, TOptions, TAdapter> update;
+            public static UpdateRunner<TValue, TOptions, TAdapter> preLateUpdate;
+            public static UpdateRunner<TValue, TOptions, TAdapter> postLateUpdate;
+            public static UpdateRunner<TValue, TOptions, TAdapter> timeUpdate;
 
-            public static (UpdateRunner<TValue, VValue, TOptions, TAnimationSpec> runner, bool isCreated) GetOrCreate(PlayerLoopTiming playerLoopTiming, MotionStorage<TValue, VValue, TOptions, TAnimationSpec> storage)
+            public static (UpdateRunner<TValue, TOptions, TAdapter> runner, bool isCreated) GetOrCreate(PlayerLoopTiming playerLoopTiming, MotionStorage<TValue, TOptions, TAdapter> storage)
             {
                 return playerLoopTiming switch
                 {
@@ -89,17 +87,17 @@ namespace LitMotion
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            static (UpdateRunner<TValue, VValue, TOptions, TAnimationSpec>, bool) CreateIfNull(PlayerLoopTiming playerLoopTiming, ref UpdateRunner<TValue, VValue, TOptions, TAnimationSpec> runner, MotionStorage<TValue, VValue, TOptions, TAnimationSpec> storage)
+            static (UpdateRunner<TValue, TOptions, TAdapter>, bool) CreateIfNull(PlayerLoopTiming playerLoopTiming, ref UpdateRunner<TValue, TOptions, TAdapter> runner, MotionStorage<TValue, TOptions, TAdapter> storage)
             {
                 if (runner == null)
                 {
                     if (playerLoopTiming == PlayerLoopTiming.FixedUpdate)
                     {
-                        runner = new UpdateRunner<TValue, VValue, TOptions, TAnimationSpec>(storage, Time.fixedTimeAsDouble, Time.fixedUnscaledTimeAsDouble, Time.realtimeSinceStartupAsDouble);
+                        runner = new UpdateRunner<TValue, TOptions, TAdapter>(storage, Time.fixedTimeAsDouble, Time.fixedUnscaledTimeAsDouble, Time.realtimeSinceStartupAsDouble);
                     }
                     else
                     {
-                        runner = new UpdateRunner<TValue, VValue, TOptions, TAnimationSpec>(storage, Time.timeAsDouble, Time.unscaledTimeAsDouble, Time.realtimeSinceStartupAsDouble);
+                        runner = new UpdateRunner<TValue, TOptions, TAdapter>(storage, Time.timeAsDouble, Time.unscaledTimeAsDouble, Time.realtimeSinceStartupAsDouble);
                     }
                     GetRunnerList(playerLoopTiming).Add(runner);
                     return (runner, true);
@@ -149,23 +147,6 @@ namespace LitMotion
         static Action<Exception> unhandledException = DefaultUnhandledExceptionHandler;
         static readonly PlayerLoopTiming[] playerLoopTimings = (PlayerLoopTiming[])Enum.GetValues(typeof(PlayerLoopTiming));
 
-        static Unity.Collections.AllocatorHelper<Unity.Collections.RewindableAllocator> allocator;
-
-        static bool isCreatedAllocator = false;
-
-        public static Unity.Collections.AllocatorHelper<Unity.Collections.RewindableAllocator> Allocator
-        {
-            get
-            {
-                if (!isCreatedAllocator)
-                {
-                    allocator = RewindableAllocatorFactory.CreateAllocator();
-                    isCreatedAllocator = true;
-                }
-                return allocator;
-            }
-        }
-
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void Init()
         {
@@ -206,40 +187,33 @@ namespace LitMotion
                     span[i].Reset();
                 }
             }
-            if (isCreatedAllocator)
-            {
-                allocator.Allocator.Rewind();
-                isCreatedAllocator = false;
-            }
         }
 
         /// <summary>
         /// Ensures the storage capacity until it reaches at least `capacity`.
         /// </summary>
         /// <param name="capacity">The minimum capacity to ensure.</param>
-        public static void EnsureStorageCapacity<TValue, VValue, TOptions, TAnimationSpec>(int capacity)
+        public static void EnsureStorageCapacity<TValue, TOptions, TAdapter>(int capacity)
             where TValue : unmanaged
-            where VValue : unmanaged
             where TOptions : unmanaged, IMotionOptions
-            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<VValue, TOptions>
+            where TAdapter : unmanaged, IMotionAdapter<TValue, TOptions>
         {
             foreach (var playerLoopTiming in playerLoopTimings)
             {
-                StorageCache<TValue, VValue, TOptions, TAnimationSpec>.GetOrCreate(playerLoopTiming).EnsureCapacity(capacity);
+                StorageCache<TValue, TOptions, TAdapter>.GetOrCreate(playerLoopTiming).EnsureCapacity(capacity);
             }
 #if UNITY_EDITOR
-            EditorMotionDispatcher.EnsureStorageCapacity<TValue, VValue, TOptions, TAnimationSpec>(capacity);
+            EditorMotionDispatcher.EnsureStorageCapacity<TValue, TOptions, TAdapter>(capacity);
 #endif
         }
 
-        internal static MotionHandle Schedule<TValue, VValue, TOptions, TAnimationSpec>(ref MotionBuilder<TValue, VValue, TOptions, TAnimationSpec> builder, PlayerLoopTiming playerLoopTiming)
+        internal static MotionHandle Schedule<TValue, TOptions, TAdapter>(ref MotionBuilder<TValue, TOptions, TAdapter> builder, PlayerLoopTiming playerLoopTiming)
             where TValue : unmanaged
-            where VValue : unmanaged
-            where TOptions : unmanaged, ITweenOptions
-            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<VValue, TOptions>
+            where TOptions : unmanaged, IMotionOptions
+            where TAdapter : unmanaged, IMotionAdapter<TValue, TOptions>
         {
-            var storage = StorageCache<TValue, VValue, TOptions, TAnimationSpec>.GetOrCreate(playerLoopTiming);
-            RunnerCache<TValue, VValue, TOptions, TAnimationSpec>.GetOrCreate(playerLoopTiming, storage);
+            var storage = StorageCache<TValue, TOptions, TAdapter>.GetOrCreate(playerLoopTiming);
+            RunnerCache<TValue, TOptions, TAdapter>.GetOrCreate(playerLoopTiming, storage);
             return storage.Create(ref builder);
         }
 
@@ -263,20 +237,19 @@ namespace LitMotion
 #if UNITY_EDITOR
     internal static class EditorMotionDispatcher
     {
-        static class Cache<TValue, VValue, TOptions, TAnimationSpec>
+        static class Cache<TValue, TOptions, TAdapter>
             where TValue : unmanaged
-            where VValue : unmanaged
             where TOptions : unmanaged, IMotionOptions
-            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<VValue, TOptions>
+            where TAdapter : unmanaged, IMotionAdapter<TValue, TOptions>
         {
-            static MotionStorage<TValue, VValue, TOptions, TAnimationSpec> storage;
-            static UpdateRunner<TValue, VValue, TOptions, TAnimationSpec> updateRunner;
+            static MotionStorage<TValue, TOptions, TAdapter> storage;
+            static UpdateRunner<TValue, TOptions, TAdapter> updateRunner;
 
-            public static MotionStorage<TValue, VValue, TOptions, TAnimationSpec> GetOrCreateStorage()
+            public static MotionStorage<TValue, TOptions, TAdapter> GetOrCreateStorage()
             {
                 if (storage == null)
                 {
-                    storage = new MotionStorage<TValue, VValue, TOptions, TAnimationSpec>(MotionManager.MotionTypeCount);
+                    storage = new MotionStorage<TValue, TOptions, TAdapter>(MotionManager.MotionTypeCount);
                     MotionManager.Register(storage);
                 }
                 return storage;
@@ -287,7 +260,7 @@ namespace LitMotion
                 if (updateRunner == null)
                 {
                     var time = EditorApplication.timeSinceStartup;
-                    updateRunner = new UpdateRunner<TValue, VValue, TOptions, TAnimationSpec>(storage, time, time, time);
+                    updateRunner = new UpdateRunner<TValue, TOptions, TAdapter>(storage, time, time, time);
                     updateRunners.Add(updateRunner);
                 }
             }
@@ -295,24 +268,22 @@ namespace LitMotion
 
         static FastListCore<IUpdateRunner> updateRunners;
 
-        public static MotionHandle Schedule<TValue, VValue, TOptions, TAnimationSpec>(ref MotionBuilder<TValue, VValue, TOptions, TAnimationSpec> builder)
+        public static MotionHandle Schedule<TValue, TOptions, TAdapter>(ref MotionBuilder<TValue, TOptions, TAdapter> builder)
             where TValue : unmanaged
-            where VValue : unmanaged
-            where TOptions : unmanaged, ITweenOptions
-            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<VValue, TOptions>
+            where TOptions : unmanaged, IMotionOptions
+            where TAdapter : unmanaged, IMotionAdapter<TValue, TOptions>
         {
-            var storage = Cache<TValue, VValue, TOptions, TAnimationSpec>.GetOrCreateStorage();
-            Cache<TValue, VValue, TOptions, TAnimationSpec>.InitUpdateRunner();
+            var storage = Cache<TValue, TOptions, TAdapter>.GetOrCreateStorage();
+            Cache<TValue, TOptions, TAdapter>.InitUpdateRunner();
             return storage.Create(ref builder);
         }
 
-        public static void EnsureStorageCapacity<TValue, VValue, TOptions, TAnimationSpec>(int capacity)
+        public static void EnsureStorageCapacity<TValue, TOptions, TAdapter>(int capacity)
             where TValue : unmanaged
-            where VValue : unmanaged
             where TOptions : unmanaged, IMotionOptions
-            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<VValue, TOptions>
+            where TAdapter : unmanaged, IMotionAdapter<TValue, TOptions>
         {
-            Cache<TValue, VValue, TOptions, TAnimationSpec>.GetOrCreateStorage().EnsureCapacity(capacity);
+            Cache<TValue, TOptions, TAdapter>.GetOrCreateStorage().EnsureCapacity(capacity);
         }
 
         [InitializeOnLoadMethod]

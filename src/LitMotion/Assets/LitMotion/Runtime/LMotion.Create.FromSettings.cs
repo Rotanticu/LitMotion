@@ -10,95 +10,100 @@ namespace LitMotion
         /// </summary>
         /// <param name="settings">Motion settings</param>
         /// <returns>Created motion builder</returns>
-        public static MotionBuilder<float, float, TweenOption, TweenAnimationSpec<float, TweenOption>> Create(MotionSettings<float, TweenOption> settings) => Create<float, float, TweenOption, TweenAnimationSpec<float, TweenOption>>(settings);
+        public static MotionBuilder<float, NoOptions, FloatMotionAdapter> Create(MotionSettings<float, NoOptions> settings) => Create<float, NoOptions, FloatMotionAdapter>(settings);
 
         /// <summary>
         /// Create a builder for building motion.
         /// </summary>
         /// <param name="settings">Motion settings</param>
         /// <returns>Created motion builder</returns>
-        public static MotionBuilder<double, float, TweenOption, TweenAnimationSpec<float, TweenOption>> Create(MotionSettings<double, TweenOption> settings) => Create<double, float, TweenOption, TweenAnimationSpec<float, TweenOption>>(settings);
+        public static MotionBuilder<double, NoOptions, DoubleMotionAdapter> Create(MotionSettings<double, NoOptions> settings) => Create<double, NoOptions, DoubleMotionAdapter>(settings);
 
         /// <summary>
         /// Create a builder for building motion.
         /// </summary>
         /// <param name="settings">Motion settings</param>
         /// <returns>Created motion builder</returns>
-        public static MotionBuilder<int, float, IntegerOptions, TweenAnimationSpec<float, IntegerOptions>> Create(MotionSettings<int, IntegerOptions> settings) => Create<int, float, IntegerOptions, TweenAnimationSpec<float, IntegerOptions>>(settings);
+        public static MotionBuilder<int, IntegerOptions, IntMotionAdapter> Create(MotionSettings<int, IntegerOptions> settings) => Create<int, IntegerOptions, IntMotionAdapter>(settings);
 
         /// <summary>
         /// Create a builder for building motion.
         /// </summary>
         /// <param name="settings">Motion settings</param>
         /// <returns>Created motion builder</returns>
-        public static MotionBuilder<long, float, IntegerOptions, TweenAnimationSpec<float, IntegerOptions>> Create(MotionSettings<long, IntegerOptions> settings) => Create<long, float, IntegerOptions, TweenAnimationSpec<float, IntegerOptions>>(settings);
+        public static MotionBuilder<long, IntegerOptions, LongMotionAdapter> Create(MotionSettings<long, IntegerOptions> settings) => Create<long, IntegerOptions, LongMotionAdapter>(settings);
 
         /// <summary>
         /// Create a builder for building motion.
         /// </summary>
         /// <param name="settings">Motion settings</param>
         /// <returns>Created motion builder</returns>
-        public static MotionBuilder<Vector2, Vector2, TweenOption, TweenAnimationSpec<Vector2, TweenOption>> Create(MotionSettings<Vector2, TweenOption> settings) => Create<Vector2, Vector2, TweenOption, TweenAnimationSpec<Vector2, TweenOption>>(settings);
+        public static MotionBuilder<Vector2, NoOptions, Vector2MotionAdapter> Create(MotionSettings<Vector2, NoOptions> settings) => Create<Vector2, NoOptions, Vector2MotionAdapter>(settings);
 
         /// <summary>
         /// Create a builder for building motion.
         /// </summary>
         /// <param name="settings">Motion settings</param>
         /// <returns>Created motion builder</returns>
-        public static MotionBuilder<Vector3, Vector3, TweenOption, TweenAnimationSpec<Vector3, TweenOption>> Create(MotionSettings<Vector3, TweenOption> settings) => Create<Vector3, Vector3, TweenOption, TweenAnimationSpec<Vector3, TweenOption>>(settings);
+        public static MotionBuilder<Vector3, NoOptions, Vector3MotionAdapter> Create(MotionSettings<Vector3, NoOptions> settings) => Create<Vector3, NoOptions, Vector3MotionAdapter>(settings);
 
         /// <summary>
         /// Create a builder for building motion.
         /// </summary>
         /// <param name="settings">Motion settings</param>
         /// <returns>Created motion builder</returns>
-        public static MotionBuilder<Vector4, Vector4, TweenOption, TweenAnimationSpec<Vector4, TweenOption>> Create(MotionSettings<Vector4, TweenOption> settings) => Create<Vector4, Vector4, TweenOption, TweenAnimationSpec<Vector4, TweenOption>>(settings);
+        public static MotionBuilder<Vector4, NoOptions, Vector4MotionAdapter> Create(MotionSettings<Vector4, NoOptions> settings) => Create<Vector4, NoOptions, Vector4MotionAdapter>(settings);
 
         /// <summary>
         /// Create a builder for building motion.
         /// </summary>
         /// <param name="settings">Motion settings</param>
         /// <returns>Created motion builder</returns>
-        public static MotionBuilder<Quaternion, Quaternion, TweenOption, TweenAnimationSpec<Quaternion, TweenOption>> Create(MotionSettings<Quaternion, TweenOption> settings) => Create<Quaternion, Quaternion, TweenOption, TweenAnimationSpec<Quaternion, TweenOption>>(settings);
+        public static MotionBuilder<Quaternion, NoOptions, QuaternionMotionAdapter> Create(MotionSettings<Quaternion, NoOptions> settings) => Create<Quaternion, NoOptions, QuaternionMotionAdapter>(settings);
 
         /// <summary>
         /// Create a builder for building motion.
         /// </summary>
         /// <param name="settings">Motion settings</param>
         /// <returns>Created motion builder</returns>
-        public static MotionBuilder<Color, Color, TweenOption, TweenAnimationSpec<Color, TweenOption>> Create(MotionSettings<Color, TweenOption> settings) => Create<Color, Color, TweenOption, TweenAnimationSpec<Color, TweenOption>>(settings);
+        public static MotionBuilder<Color, NoOptions, ColorMotionAdapter> Create(MotionSettings<Color, NoOptions> settings) => Create<Color, NoOptions, ColorMotionAdapter>(settings);
 
         /// <summary>
         /// Create a builder for building motion.
         /// </summary>
         /// <param name="settings">Motion settings</param>
         /// <returns>Created motion builder</returns>
-        public static MotionBuilder<Rect, Rect, TweenOption, TweenAnimationSpec<Rect, TweenOption>> Create(MotionSettings<Rect, TweenOption> settings) => Create<Rect, Rect, TweenOption, TweenAnimationSpec<Rect, TweenOption>>(settings);
+        public static MotionBuilder<Rect, NoOptions, RectMotionAdapter> Create(MotionSettings<Rect, NoOptions> settings) => Create<Rect, NoOptions, RectMotionAdapter>(settings);
 
         /// <summary>
         /// Create a builder for building motion.
         /// </summary>
         /// <typeparam name="TValue">The type of value to animate</typeparam>
-        /// <typeparam name="VValue">The type of vectorized value for internal processing</typeparam>
         /// <typeparam name="TOptions">The type of special parameters given to the motion entity</typeparam>
-        /// <typeparam name="TAnimationSpec">The type of animation specification</typeparam>
+        /// <typeparam name="TAdapter">The type of adapter that support value animation</typeparam>
         /// <param name="settings">Motion settings</param>
         /// <returns>Created motion builder</returns>
-        public static MotionBuilder<TValue, VValue, TOptions, TAnimationSpec> Create<TValue, VValue, TOptions, TAnimationSpec>(MotionSettings<TValue, TOptions> settings)
+        public static MotionBuilder<TValue, TOptions, TAdapter> Create<TValue, TOptions, TAdapter>(MotionSettings<TValue, TOptions> settings)
             where TValue : unmanaged
-            where VValue : unmanaged
-            where TOptions : unmanaged, ITweenOptions
-            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<VValue, TOptions>
+            where TOptions : unmanaged, IMotionOptions
+            where TAdapter : unmanaged, IMotionAdapter<TValue, TOptions>
         {
             var buffer = MotionBuilderBuffer<TValue, TOptions>.Rent();
             buffer.StartValue = settings.StartValue;
             buffer.EndValue = settings.EndValue;
+            buffer.Duration = settings.Duration;
             buffer.Options = settings.Options;
+            buffer.Ease = settings.Ease;
+            buffer.AnimationCurve = settings.CustomEaseCurve;
+            buffer.Delay = settings.Delay;
+            buffer.DelayType = settings.DelayType;
+            buffer.Loops = settings.Loops;
+            buffer.LoopType = settings.LoopType;
             buffer.CancelOnError = settings.CancelOnError;
             buffer.SkipValuesDuringDelay = settings.SkipValuesDuringDelay;
             buffer.ImmediateBind = settings.ImmediateBind;
             buffer.Scheduler = settings.Scheduler;
-            return new MotionBuilder<TValue, VValue, TOptions, TAnimationSpec>(buffer);
+            return new MotionBuilder<TValue, TOptions, TAdapter>(buffer);
         }
     }
 }

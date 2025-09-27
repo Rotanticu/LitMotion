@@ -4,11 +4,9 @@ namespace LitMotion
     /// Implement this interface to define animating values of a particular type.
     /// </summary>
     /// <typeparam name="TValue">The type of value to animate</typeparam>
-    /// <typeparam name="VValue">The vectorized type for internal calculations</typeparam>
     /// <typeparam name="TOptions">The type of special parameters given to the motion entity</typeparam>
-    public interface IMotionAdapter<TValue, VValue, TOptions> : ITwoWayConverter<TValue, VValue>
+    public interface IMotionAdapter<TValue, TOptions>
         where TValue : unmanaged
-        where VValue : unmanaged
         where TOptions : unmanaged, IMotionOptions
     {
         /// <summary>

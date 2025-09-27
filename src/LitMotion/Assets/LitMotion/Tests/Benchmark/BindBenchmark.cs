@@ -15,7 +15,7 @@ namespace LitMotion.Tests.Benchmark
         [OneTimeSetUp]
         public void OneTimeSetUp()
         {
-            MotionDispatcher.EnsureStorageCapacity<float, float, TweenOption, TweenAnimationSpec<float, TweenOption>>(64000);
+            MotionDispatcher.EnsureStorageCapacity<float, NoOptions, FloatMotionAdapter>(64000);
         }
 
         [TearDown]

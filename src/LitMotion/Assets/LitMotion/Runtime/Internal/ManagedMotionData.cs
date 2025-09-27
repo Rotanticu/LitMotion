@@ -88,36 +88,5 @@ namespace LitMotion
                 MotionDispatcher.GetUnhandledExceptionHandler()?.Invoke(ex);
             }
         }
-
-        /// <summary>
-        /// Initialize the managed motion data with builder buffer values
-        /// </summary>
-        /// <typeparam name="TValue">The type of value to animate</typeparam>
-        /// <typeparam name="TOptions">The options type</typeparam>
-        /// <param name="buffer">The motion builder buffer containing initialization data</param>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void Initialize<TValue, TOptions>(in MotionBuilderBuffer<TValue, TOptions> buffer, TValue startValue)
-            where TValue : unmanaged
-            where TOptions : unmanaged, IMotionOptions
-        {
-            CancelOnError = buffer.CancelOnError;
-            SkipValuesDuringDelay = buffer.SkipValuesDuringDelay;
-            UpdateAction = buffer.UpdateAction;
-            OnLoopCompleteAction = buffer.OnLoopCompleteAction;
-            OnCancelAction = buffer.OnCancelAction;
-            OnCompleteAction = buffer.OnCompleteAction;
-            StateCount = buffer.StateCount;
-            State0 = buffer.State0;
-            State1 = buffer.State1;
-            State2 = buffer.State2;
-
-#if LITMOTION_DEBUG
-            DebugName = buffer.DebugName;
-#endif
-            if (buffer.ImmediateBind && buffer.UpdateAction != null)
-            {
-                UpdateUnsafe(startValue);
-            }
-        }
     }
 }
