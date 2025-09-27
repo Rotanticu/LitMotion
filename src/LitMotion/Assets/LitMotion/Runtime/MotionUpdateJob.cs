@@ -9,16 +9,18 @@ namespace LitMotion
     /// <summary>
     /// A job that updates the status of the motion data and outputs the current value.
     /// </summary>
-    /// <typeparam name="TValue">The type of value to animate</typeparam>
+    /// <typeparam name="TValue">The type of value to animate (user-facing)</typeparam>
+    /// <typeparam name="VValue">The type of vectorized value for internal processing</typeparam>
     /// <typeparam name="TOptions">The type of special parameters given to the motion data</typeparam>
-    /// <typeparam name="TAdapter">The type of adapter that support value animation</typeparam>
+    /// <typeparam name="TAnimationSpec">The type of vectorized animation specification</typeparam>
     [BurstCompile]
-    public unsafe struct MotionUpdateJob<TValue, TOptions, TAdapter> : IJobParallelFor
+    public unsafe struct MotionUpdateJob<TValue, VValue, TOptions, TAnimationSpec> : IJobParallelFor
         where TValue : unmanaged
+        where VValue : unmanaged
         where TOptions : unmanaged, IMotionOptions
-        where TAdapter : unmanaged, IMotionAdapter<TValue, TOptions>
+        where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<VValue, TOptions>
     {
-        [NativeDisableUnsafePtrRestriction] internal MotionData<TValue, TOptions>* DataPtr;
+        [NativeDisableUnsafePtrRestriction] internal TargetBasedAnimation<TValue, VValue, TOptions, TAnimationSpec>* DataPtr;
         [ReadOnly] public double DeltaTime;
         [ReadOnly] public double UnscaledDeltaTime;
         [ReadOnly] public double RealDeltaTime;
@@ -26,18 +28,19 @@ namespace LitMotion
         [WriteOnly] public NativeList<int>.ParallelWriter CompletedIndexList;
         [WriteOnly] public NativeArray<TValue> Output;
 
+        [WriteOnly] public NativeArray<VValue> OutputVelocity;
+
         public void Execute([AssumeRange(0, int.MaxValue)] int index)
         {
             var ptr = DataPtr + index;
-            ref var state = ref ptr->Core.State;
-            ref var parameters = ref ptr->Core.Parameters;
+            var state = ptr->Core.State;
 
-            if (Hint.Likely(state.Status is MotionStatus.Scheduled or MotionStatus.Delayed or MotionStatus.Playing) ||
-                Hint.Unlikely(state.IsPreserved && state.Status is MotionStatus.Completed))
+            if (Hint.Likely(state->Status is MotionStatus.Scheduled or MotionStatus.Delayed or MotionStatus.Playing) ||
+                Hint.Unlikely(state->IsPreserved && state->Status is MotionStatus.Completed))
             {
-                if (Hint.Unlikely(state.IsInSequence)) return;
+                if (Hint.Unlikely(state->IsInSequence)) return;
 
-                var deltaTime = parameters.TimeKind switch
+                var deltaTime = ptr->Core.TimeKind switch
                 {
                     MotionTimeKind.Time => DeltaTime,
                     MotionTimeKind.UnscaledTime => UnscaledDeltaTime,
@@ -48,11 +51,13 @@ namespace LitMotion
                 var time = state.Time + deltaTime;
                 ptr->Update<TAdapter>(time, deltaTime, out var result);
                 Output[index] = result;
+                ptr->GetVelocityVectorFromNanos(time,out var velocity);
+                OutputVelocity[index] = velocity;
             }
-            else if ((!state.IsPreserved && state.Status is MotionStatus.Completed) || state.Status is MotionStatus.Canceled)
+            else if ((!state->IsPreserved && state->Status is MotionStatus.Completed) || state->Status is MotionStatus.Canceled)
             {
                 CompletedIndexList.AddNoResize(index);
-                state.Status = MotionStatus.Disposed;
+                state->Status = MotionStatus.Disposed;
             }
         }
     }

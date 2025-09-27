@@ -76,7 +76,7 @@ namespace LitMotion
             this.ease = ease;
         }
 
-        public MotionHandle Schedule(Action<MotionBuilder<double, NoOptions, DoubleMotionAdapter>> configuration)
+        public MotionHandle Schedule(Action<MotionBuilder<double, double, TweenOption, TweenAnimationSpec<double, TweenOption>>> configuration)
         {
             var source = MotionSequenceSource.Rent();
             var builder = LMotion.Create(0.0, duration, (float)duration)
@@ -170,7 +170,7 @@ namespace LitMotion
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public MotionHandle Run(Action<MotionBuilder<double, NoOptions, DoubleMotionAdapter>> configuration)
+        public MotionHandle Run(Action<MotionBuilder<double, double, TweenOption, TweenAnimationSpec<double, TweenOption>>> configuration)
         {
             CheckIsDisposed();
             var handle = source.Schedule(configuration);

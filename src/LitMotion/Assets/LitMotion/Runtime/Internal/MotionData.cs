@@ -260,6 +260,32 @@ namespace LitMotion
         public TValue EndValue;
         public TOptions Options;
 
+        // 新增泛型Initialize方法
+        public void Initialize(TweenOption option)
+        {
+            Core.Parameters.Duration = option.DurationNanos / AnimationConstants.SecondsToNanos;
+            Core.Parameters.Delay = option.DelayNanos / AnimationConstants.SecondsToNanos;
+            Core.Parameters.DelayType = option.DelayType;
+            Core.Parameters.Ease = option.Ease;
+            Core.Parameters.Loops = option.Loops;
+            Core.Parameters.LoopType = option.LoopType;
+        }
+
+        public TValue GetFirstValue<TAdapter>()
+            where TAdapter : unmanaged, IMotionAdapter<TValue, TValue, TOptions>
+        {
+            return default(TAdapter).Evaluate(ref StartValue,ref EndValue,ref Options,
+                new()
+                {
+                    Progress = Core.Parameters.Ease switch
+                    {
+                        Ease.CustomAnimationCurve => Core.Parameters.AnimationCurve.Evaluate(0f),
+                        _ => EaseUtility.Evaluate(0f, Core.Parameters.Ease)
+                    },
+                    Time = Core.State.Time,
+                });
+        }
+
         public void Update<TAdapter>(double time, double deltaTime, out TValue result)
             where TAdapter : unmanaged, IMotionAdapter<TValue, TOptions>
         {
@@ -332,7 +358,7 @@ namespace LitMotion
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Complete<TAdapter>(out TValue result)
-            where TAdapter : unmanaged, IMotionAdapter<TValue, TOptions>
+            where TAdapter : unmanaged, IMotionAdapter<TValue, TValue, TOptions>
         {
             bool isDurationBased = default(TAdapter).IsDurationBased;
             Core.Complete(out var progress);

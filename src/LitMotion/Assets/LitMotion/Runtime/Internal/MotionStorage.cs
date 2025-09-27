@@ -36,10 +36,11 @@ namespace LitMotion
         void Reset();
     }
 
-    internal sealed class MotionStorage<TValue, TOptions, TAdapter> : IMotionStorage
+    internal sealed class MotionStorage<TValue, VValue, TOptions, TAnimationSpec> : IMotionStorage
         where TValue : unmanaged
+        where VValue : unmanaged
         where TOptions : unmanaged, IMotionOptions
-        where TAdapter : unmanaged, IMotionAdapter<TValue, TOptions>
+        where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<VValue, TOptions>
     {
         const int InitialCapacity = 32;
 
@@ -48,7 +49,7 @@ namespace LitMotion
 
         SparseSetCore sparseSetCore = new(InitialCapacity);
         SparseIndex[] sparseIndexLookup = new SparseIndex[InitialCapacity];
-        MotionData<TValue, TOptions>[] unmanagedDataArray = new MotionData<TValue, TOptions>[InitialCapacity];
+        TargetBasedAnimation<TValue, VValue, TOptions, TAnimationSpec>[] unmanagedDataArray = new TargetBasedAnimation<TValue, VValue, TOptions, TAnimationSpec>[InitialCapacity];
         ManagedMotionData[] managedDataArray = new ManagedMotionData[InitialCapacity];
         AllocatorHelper<RewindableAllocator> allocator;
         int tail;
@@ -60,7 +61,7 @@ namespace LitMotion
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Span<MotionData<TValue, TOptions>> GetDataSpan()
+        public Span<TargetBasedAnimation<TValue, VValue, TOptions, TAnimationSpec>> GetDataSpan()
         {
             return unmanagedDataArray.AsSpan();
         }
@@ -80,88 +81,27 @@ namespace LitMotion
             ArrayHelper.EnsureCapacity(ref managedDataArray, minimumCapacity);
         }
 
-        public unsafe MotionHandle Create(ref MotionBuilder<TValue, TOptions, TAdapter> builder)
+        public unsafe MotionHandle Create<TweenOptions,TTweenAnimationSpec>(ref MotionBuilder<TValue, VValue, TweenOptions, TTweenAnimationSpec> builder)
+            where TweenOptions : unmanaged, ITweenOptions
+            where TTweenAnimationSpec : unmanaged, IVectorizedAnimationSpec<VValue, TweenOptions>
         {
             EnsureCapacity(tail + 1);
             var buffer = builder.buffer;
 
             ref var dataRef = ref unmanagedDataArray[tail];
             ref var managedDataRef = ref managedDataArray[tail];
+            
+            // 初始化非托管数据
+            var options = Unsafe.As<TweenOptions, TOptions>(ref buffer.Options);
+            dataRef.Initialize(options, buffer.StartValue, buffer.EndValue);
 
-            ref var state = ref dataRef.Core.State;
-            ref var parameters = ref dataRef.Core.Parameters;
-
-            state.Status = MotionStatus.Scheduled;
-            state.Time = 0;
-            state.PlaybackSpeed = 1f;
-            state.IsPreserved = false;
-
-            parameters.TimeKind = buffer.TimeKind;
-            parameters.Duration = buffer.Duration;
-            parameters.Delay = buffer.Delay;
-            parameters.DelayType = buffer.DelayType;
-            parameters.Ease = buffer.Ease;
-            parameters.Loops = buffer.Loops;
-            parameters.LoopType = buffer.LoopType;
-            dataRef.StartValue = buffer.StartValue;
-            dataRef.EndValue = buffer.EndValue;
-            dataRef.Options = buffer.Options;
-
-            if (buffer.Ease == Ease.CustomAnimationCurve)
-            {
-                if (parameters.AnimationCurve.IsCreated)
-                {
-                    parameters.AnimationCurve.CopyFrom(buffer.AnimationCurve);
-                }
-                else
-                {
-#if LITMOTION_COLLECTIONS_2_0_OR_NEWER
-                    parameters.AnimationCurve = new NativeAnimationCurve(buffer.AnimationCurve, allocator.Allocator.Handle);
-#else
-                    parameters.AnimationCurve = new UnsafeAnimationCurve(buffer.AnimationCurve, allocator.Allocator.Handle);
-#endif
-                }
-            }
-
-            managedDataRef.CancelOnError = buffer.CancelOnError;
-            managedDataRef.SkipValuesDuringDelay = buffer.SkipValuesDuringDelay;
-            managedDataRef.UpdateAction = buffer.UpdateAction;
-            managedDataRef.OnLoopCompleteAction = buffer.OnLoopCompleteAction;
-            managedDataRef.OnCancelAction = buffer.OnCancelAction;
-            managedDataRef.OnCompleteAction = buffer.OnCompleteAction;
-            managedDataRef.StateCount = buffer.StateCount;
-            managedDataRef.State0 = buffer.State0;
-            managedDataRef.State1 = buffer.State1;
-            managedDataRef.State2 = buffer.State2;
-
-#if LITMOTION_DEBUG
-            managedDataRef.DebugName = buffer.DebugName;
-#endif
-
-            if (buffer.ImmediateBind && buffer.UpdateAction != null)
-            {
-                managedDataRef.UpdateUnsafe(
-                    default(TAdapter).Evaluate(
-                        ref dataRef.StartValue,
-                        ref dataRef.EndValue,
-                        ref dataRef.Options,
-                        new()
-                        {
-                            Progress = parameters.Ease switch
-                            {
-                                Ease.CustomAnimationCurve => buffer.AnimationCurve.Evaluate(0f),
-                                _ => EaseUtility.Evaluate(0f, parameters.Ease)
-                            },
-                            Time = state.Time,
-                        }
-                ));
-            }
-
+            // 初始化托管数据
+            dataRef.GetValueFromNanos(0L,out var startValue);
+            managedDataRef.Initialize(buffer,startValue);
             var sparseIndex = sparseSetCore.Alloc(tail);
             sparseIndexLookup[tail] = sparseIndex;
 
             tail++;
-
             return new MotionHandle()
             {
                 Index = sparseIndex.Index,
@@ -216,26 +156,26 @@ namespace LitMotion
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsActive(MotionHandle handle)
+        public unsafe bool IsActive(MotionHandle handle)
         {
             ref var slot = ref sparseSetCore.GetSlotRefUnchecked(handle.Index);
             if (IsDenseIndexOutOfRange(slot.DenseIndex)) return false;
             if (IsInvalidVersion(slot.Version, handle)) return false;
 
-            ref var state = ref unmanagedDataArray[slot.DenseIndex].Core.State;
-            return state.Status is MotionStatus.Scheduled or MotionStatus.Delayed or MotionStatus.Playing ||
-                (state.Status is MotionStatus.Completed && state.IsPreserved);
+            var state = unmanagedDataArray[slot.DenseIndex].Core.State;
+            return state->Status is MotionStatus.Scheduled or MotionStatus.Delayed or MotionStatus.Playing ||
+                (state->Status is MotionStatus.Completed && state->IsPreserved);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsPlaying(MotionHandle handle)
+        public unsafe bool IsPlaying(MotionHandle handle)
         {
             ref var slot = ref sparseSetCore.GetSlotRefUnchecked(handle.Index);
             if (IsDenseIndexOutOfRange(slot.DenseIndex)) return false;
             if (IsInvalidVersion(slot.Version, handle)) return false;
 
-            ref var state = ref unmanagedDataArray[slot.DenseIndex].Core.State;
-            return state.Status is MotionStatus.Scheduled or MotionStatus.Delayed or MotionStatus.Playing;
+            var state = unmanagedDataArray[slot.DenseIndex].Core.State;
+            return state->Status is MotionStatus.Scheduled or MotionStatus.Delayed or MotionStatus.Playing;
         }
 
         public bool TryCancel(MotionHandle handle, bool checkIsInSequence = true)
@@ -259,7 +199,7 @@ namespace LitMotion
             }
         }
 
-        int TryCancelCore(MotionHandle handle, bool checkIsInSequence)
+        unsafe int TryCancelCore(MotionHandle handle, bool checkIsInSequence)
         {
             ref var slot = ref sparseSetCore.GetSlotRefUnchecked(handle.Index);
             var denseIndex = slot.DenseIndex;
@@ -269,20 +209,20 @@ namespace LitMotion
             }
 
             ref var dataRef = ref unmanagedDataArray[denseIndex];
-            ref var state = ref dataRef.Core.State;
+            var state = dataRef.Core.State;
 
-            if (state.Status is MotionStatus.None or MotionStatus.Canceled ||
-                (state.Status is MotionStatus.Completed && !state.IsPreserved))
+            if (state->Status is MotionStatus.None or MotionStatus.Canceled ||
+                (state->Status is MotionStatus.Completed && !state->IsPreserved))
             {
                 return 2;
             }
 
-            if (checkIsInSequence && state.IsInSequence)
+            if (checkIsInSequence && state->IsInSequence)
             {
                 return 3;
             }
 
-            state.Status = MotionStatus.Canceled;
+            state->Status = MotionStatus.Canceled;
 
             ref var managedData = ref managedDataArray[denseIndex];
             managedData.InvokeOnCancel();
@@ -313,7 +253,7 @@ namespace LitMotion
             }
         }
 
-        int TryCompleteCore(MotionHandle handle, bool checkIsInSequence)
+        unsafe int TryCompleteCore(MotionHandle handle, bool checkIsInSequence)
         {
             ref var slot = ref sparseSetCore.GetSlotRefUnchecked(handle.Index);
 
@@ -323,25 +263,24 @@ namespace LitMotion
             }
 
             ref var dataRef = ref unmanagedDataArray[slot.DenseIndex];
-            ref var state = ref dataRef.Core.State;
-            ref var parameters = ref dataRef.Core.Parameters;
+            var state = dataRef.Core.State;
 
-            if (state.Status is MotionStatus.None or MotionStatus.Canceled or MotionStatus.Completed)
+            if (state->Status is MotionStatus.None or MotionStatus.Canceled or MotionStatus.Completed)
             {
                 return 2;
             }
 
-            if (checkIsInSequence && state.IsInSequence)
+            if (checkIsInSequence && state->IsInSequence)
             {
                 return 3;
             }
 
-            if (parameters.Loops < 0)
+            if (dataRef.IsInfinite)
             {
                 return 4;
             }
 
-            dataRef.Complete<TAdapter>(out var result);
+            dataRef.Complete(out var result);
 
             ref var managedData = ref managedDataArray[slot.DenseIndex];
             try
@@ -353,9 +292,9 @@ namespace LitMotion
                 MotionDispatcher.GetUnhandledExceptionHandler()?.Invoke(ex);
             }
 
-            if (state.WasLoopCompleted)
+            if (state->WasLoopCompleted)
             {
-                managedData.InvokeOnLoopComplete(state.CompletedLoops);
+                managedData.InvokeOnLoopComplete(state->CompletedLoops);
             }
 
             managedData.InvokeOnComplete();
@@ -373,16 +312,16 @@ namespace LitMotion
             var version = slot.Version;
             if (version <= 0 || version != handle.Version) Error.MotionNotExists();
 
-            fixed (MotionData<TValue, TOptions>* arrayPtr = unmanagedDataArray)
+            fixed (TargetBasedAnimation<TValue, VValue, TOptions, TAnimationSpec>* arrayPtr = unmanagedDataArray)
             {
                 var dataPtr = arrayPtr + denseIndex;
-                ref var state = ref dataPtr->Core.State;
+                var state = dataPtr->Core.State;
 
-                if (checkIsInSequence && state.IsInSequence) Error.MotionIsInSequence();
+                if (checkIsInSequence && state->IsInSequence) Error.MotionIsInSequence();
 
                 dataPtr->Update<TAdapter>(time, time - state.Time, out var result);
 
-                var status = state.Status;
+                var status = state->Status;
                 ref var managedData = ref managedDataArray[denseIndex];
 
                 if (status is MotionStatus.Playing or MotionStatus.Completed || (status == MotionStatus.Delayed && !managedData.SkipValuesDuringDelay))
@@ -396,18 +335,18 @@ namespace LitMotion
                         MotionDispatcher.GetUnhandledExceptionHandler()?.Invoke(ex);
                         if (managedData.CancelOnError)
                         {
-                            state.Status = MotionStatus.Canceled;
+                            state->Status = MotionStatus.Canceled;
                             managedData.OnCancelAction?.Invoke();
                             return;
                         }
                     }
 
-                    if (state.WasLoopCompleted)
+                    if (state->WasLoopCompleted)
                     {
-                        managedData.InvokeOnLoopComplete(state.CompletedLoops);
+                        managedData.InvokeOnLoopComplete(state->CompletedLoops);
                     }
 
-                    if (status is MotionStatus.Completed && state.WasStatusChanged)
+                    if (status is MotionStatus.Completed && state->WasStatusChanged)
                     {
                         managedData.InvokeOnComplete();
                     }
@@ -415,24 +354,25 @@ namespace LitMotion
             }
         }
 
-        public void AddToSequence(MotionHandle handle, out double motionDuration)
+        public unsafe void AddToSequence(MotionHandle handle, out double motionDuration)
         {
             ref var slot = ref GetSlotWithVarify(handle, true);
             ref var dataRef = ref unmanagedDataArray[slot.DenseIndex];
 
-            if (dataRef.Core.State.Status is not MotionStatus.Scheduled)
+            if (dataRef.Core.State->Status is not MotionStatus.Scheduled)
             {
                 throw new ArgumentException("Cannot add a running motion to a sequence.");
             }
 
             motionDuration = handle.TotalDuration;
-            if (double.IsInfinity(motionDuration))
+            //if (double.IsInfinity(motionDuration))
+            if (handle.IsInfinite)
             {
                 throw new ArgumentException("Cannot add an infinitely looping motion to a sequence.");
             }
 
-            dataRef.Core.State.IsPreserved = true;
-            dataRef.Core.State.IsInSequence = true;
+            dataRef.Core.State->IsPreserved = true;
+            dataRef.Core.State->IsInSequence = true;
         }
 
         public ref ManagedMotionData GetManagedDataRef(MotionHandle handle, bool checkIsInSequence = true)
@@ -455,7 +395,7 @@ namespace LitMotion
             return ref UnsafeUtility.As<MotionData<TValue, TOptions>, MotionData<ValueType, OptionsType>>(ref unmanagedDataArray[slot.DenseIndex]);
         }
 
-        public MotionDebugInfo GetDebugInfo(MotionHandle handle)
+        public unsafe MotionDebugInfo GetDebugInfo(MotionHandle handle)
         {
             ref var slot = ref GetSlotWithVarify(handle, false);
             ref var dataRef = ref unmanagedDataArray[slot.DenseIndex];
@@ -463,25 +403,25 @@ namespace LitMotion
             return new()
             {
                 StartValue = dataRef.StartValue,
-                EndValue = dataRef.EndValue,
-                Options = dataRef.Options,
+                EndValue = dataRef.TargetValue,
+                Options = UnsafeUtility.AsRef<TOptions>(dataRef.Core.Options)
             };
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        ref SparseSetCore.Slot GetSlotWithVarify(MotionHandle handle, bool checkIsInSequence = true)
+        unsafe ref SparseSetCore.Slot GetSlotWithVarify(MotionHandle handle, bool checkIsInSequence = true)
         {
             ref var slot = ref sparseSetCore.GetSlotRefUnchecked(handle.Index);
             if (IsDenseIndexOutOfRange(slot.DenseIndex)) Error.MotionNotExists();
 
             ref var dataRef = ref unmanagedDataArray[slot.DenseIndex];
 
-            if (IsInvalidVersion(slot.Version, handle) || dataRef.Core.State.Status == MotionStatus.None)
+            if (IsInvalidVersion(slot.Version, handle) || dataRef.Core.State->Status == MotionStatus.None)
             {
                 Error.MotionNotExists();
             }
 
-            if (checkIsInSequence && dataRef.Core.State.IsInSequence)
+            if (checkIsInSequence && dataRef.Core.State->IsInSequence)
             {
                 Error.MotionIsInSequence();
             }

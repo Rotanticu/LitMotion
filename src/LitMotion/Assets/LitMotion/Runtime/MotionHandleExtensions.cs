@@ -62,7 +62,7 @@ namespace LitMotion
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static MotionHandle Preserve(this MotionHandle handle)
         {
-            MotionManager.GetDataRef(handle).State.IsPreserved = true;
+            MotionManager.GetStateRef(handle).IsPreserved = true;
             return handle;
         }
 

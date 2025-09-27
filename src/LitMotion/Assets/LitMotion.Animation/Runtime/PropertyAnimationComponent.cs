@@ -5,11 +5,12 @@ using UnityEngine;
 
 namespace LitMotion.Animation
 {
-    public abstract class PropertyAnimationComponent<TObject, TValue, TOptions, TAdapter> : LitMotionAnimationComponent
+    public abstract class PropertyAnimationComponent<TObject, TValue, VValue, TOptions, TAnimationSpec> : LitMotionAnimationComponent
         where TObject : UnityEngine.Object
         where TValue : unmanaged
-        where TOptions : unmanaged, IMotionOptions
-        where TAdapter : unmanaged, IMotionAdapter<TValue, TOptions>
+        where VValue : unmanaged
+        where TOptions : unmanaged, ITweenOptions
+        where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<VValue, TOptions>
     {
         [SerializeField] TObject target;
         [SerializeField] SerializableMotionSettings<TValue, TOptions> settings;
@@ -31,7 +32,7 @@ namespace LitMotion.Animation
 
             if (relative)
             {
-                handle = LMotion.Create<TValue, TOptions, TAdapter>(settings)
+                handle = LMotion.Create<TValue, VValue, TOptions, TAnimationSpec>(settings)
                     .Bind(this, (x, state) =>
                     {
                         state.SetValue(target, state.GetRelativeValue(state.startValue, x));
@@ -39,7 +40,7 @@ namespace LitMotion.Animation
             }
             else
             {
-                handle = LMotion.Create<TValue, TOptions, TAdapter>(settings)
+                handle = LMotion.Create<TValue, VValue, TOptions, TAnimationSpec>(settings)
                     .Bind(this, (x, state) =>
                     {
                         state.SetValue(target, x);
@@ -56,7 +57,7 @@ namespace LitMotion.Animation
 
     // I wish we could use Generic Math in Unity... :(
 
-    public abstract class FloatPropertyAnimationComponent<TObject> : PropertyAnimationComponent<TObject, float, NoOptions, FloatMotionAdapter>
+    public abstract class FloatPropertyAnimationComponent<TObject> : PropertyAnimationComponent<TObject, float, float, TweenOption, TweenAnimationSpec<float, TweenOption>>
         where TObject : UnityEngine.Object
     {
         protected sealed override float GetRelativeValue(in float startValue, in float relativeValue)
@@ -65,7 +66,7 @@ namespace LitMotion.Animation
         }
     }
 
-    public abstract class DoublePropertyAnimationComponent<TObject> : PropertyAnimationComponent<TObject, double, NoOptions, DoubleMotionAdapter>
+    public abstract class DoublePropertyAnimationComponent<TObject> : PropertyAnimationComponent<TObject, double, float, TweenOption, TweenAnimationSpec<float, TweenOption>>
         where TObject : UnityEngine.Object
     {
         protected sealed override double GetRelativeValue(in double startValue, in double relativeValue)
@@ -74,7 +75,7 @@ namespace LitMotion.Animation
         }
     }
 
-    public abstract class IntPropertyAnimationComponent<TObject> : PropertyAnimationComponent<TObject, int, IntegerOptions, IntMotionAdapter>
+    public abstract class IntPropertyAnimationComponent<TObject> : PropertyAnimationComponent<TObject, int, float, IntegerOptions, TweenAnimationSpec<float, IntegerOptions>>
         where TObject : UnityEngine.Object
     {
         protected sealed override int GetRelativeValue(in int startValue, in int relativeValue)
@@ -83,7 +84,7 @@ namespace LitMotion.Animation
         }
     }
 
-    public abstract class LongPropertyAnimationComponent<TObject> : PropertyAnimationComponent<TObject, long, IntegerOptions, LongMotionAdapter>
+    public abstract class LongPropertyAnimationComponent<TObject> : PropertyAnimationComponent<TObject, long, float, IntegerOptions, TweenAnimationSpec<float, IntegerOptions>>
         where TObject : UnityEngine.Object
     {
         protected sealed override long GetRelativeValue(in long startValue, in long relativeValue)
@@ -92,7 +93,7 @@ namespace LitMotion.Animation
         }
     }
 
-    public abstract class Vector2PropertyAnimationComponent<TObject> : PropertyAnimationComponent<TObject, Vector2, NoOptions, Vector2MotionAdapter>
+    public abstract class Vector2PropertyAnimationComponent<TObject> : PropertyAnimationComponent<TObject, Vector2, Vector2, TweenOption, TweenAnimationSpec<Vector2, TweenOption>>
         where TObject : UnityEngine.Object
     {
         protected sealed override Vector2 GetRelativeValue(in Vector2 startValue, in Vector2 relativeValue)
@@ -101,7 +102,7 @@ namespace LitMotion.Animation
         }
     }
 
-    public abstract class Vector3PropertyAnimationComponent<TObject> : PropertyAnimationComponent<TObject, Vector3, NoOptions, Vector3MotionAdapter>
+    public abstract class Vector3PropertyAnimationComponent<TObject> : PropertyAnimationComponent<TObject, Vector3, Vector3, TweenOption, TweenAnimationSpec<Vector3, TweenOption>>
         where TObject : UnityEngine.Object
     {
         protected sealed override Vector3 GetRelativeValue(in Vector3 startValue, in Vector3 relativeValue)
@@ -110,7 +111,7 @@ namespace LitMotion.Animation
         }
     }
 
-    public abstract class Vector4PropertyAnimationComponent<TObject> : PropertyAnimationComponent<TObject, Vector4, NoOptions, Vector4MotionAdapter>
+    public abstract class Vector4PropertyAnimationComponent<TObject> : PropertyAnimationComponent<TObject, Vector4, Vector4, TweenOption, TweenAnimationSpec<Vector4, TweenOption>>
         where TObject : UnityEngine.Object
     {
         protected sealed override Vector4 GetRelativeValue(in Vector4 startValue, in Vector4 relativeValue)
@@ -119,7 +120,7 @@ namespace LitMotion.Animation
         }
     }
 
-    public abstract class ColorPropertyAnimationComponent<TObject> : PropertyAnimationComponent<TObject, Color, NoOptions, ColorMotionAdapter>
+    public abstract class ColorPropertyAnimationComponent<TObject> : PropertyAnimationComponent<TObject, Color, Color, TweenOption, TweenAnimationSpec<Color, TweenOption>>
         where TObject : UnityEngine.Object
     {
         protected sealed override Color GetRelativeValue(in Color startValue, in Color relativeValue)
@@ -128,7 +129,7 @@ namespace LitMotion.Animation
         }
     }
 
-    public abstract class RectPropertyAnimationComponent<TObject> : PropertyAnimationComponent<TObject, Rect, NoOptions, RectMotionAdapter>
+    public abstract class RectPropertyAnimationComponent<TObject> : PropertyAnimationComponent<TObject, Rect, Rect, TweenOption, TweenAnimationSpec<Rect, TweenOption>>
         where TObject : UnityEngine.Object
     {
         protected sealed override Rect GetRelativeValue(in Rect startValue, in Rect relativeValue)
@@ -137,7 +138,7 @@ namespace LitMotion.Animation
         }
     }
 
-    public abstract class FixedString512BytesPropertyAnimationComponent<TObject> : PropertyAnimationComponent<TObject, FixedString512Bytes, StringOptions, FixedString512BytesMotionAdapter>
+    public abstract class FixedString512BytesPropertyAnimationComponent<TObject> : PropertyAnimationComponent<TObject, FixedString512Bytes, FixedString512Bytes, StringOptions, TweenAnimationSpec<FixedString512Bytes, StringOptions>>
         where TObject : UnityEngine.Object
     {
         protected sealed override FixedString512Bytes GetRelativeValue(in FixedString512Bytes startValue, in FixedString512Bytes relativeValue)

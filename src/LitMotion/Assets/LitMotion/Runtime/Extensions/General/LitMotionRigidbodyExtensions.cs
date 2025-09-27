@@ -18,9 +18,9 @@ namespace LitMotion.Extensions
         /// <param name="rigidbody">Target component</param>
         /// <param name="useMovePosition">Whether to use rigidbody.MovePosition()</param>
         /// <returns>Handle of the created motion data.</returns>
-        public static MotionHandle BindToPosition<TOptions, TAdapter>(this MotionBuilder<Vector3, TOptions, TAdapter> builder, Rigidbody rigidbody, bool useMovePosition = true)
-            where TOptions : unmanaged, IMotionOptions
-            where TAdapter : unmanaged, IMotionAdapter<Vector3, TOptions>
+        public static MotionHandle BindToPosition<TOptions, TAnimationSpec>(this MotionBuilder<Vector3, Vector3, TOptions, TAnimationSpec> builder, Rigidbody rigidbody, bool useMovePosition = true)
+            where TOptions : unmanaged, ITweenOptions
+            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<Vector3, TOptions>
         {
             Error.IsNull(rigidbody);
 
@@ -49,9 +49,9 @@ namespace LitMotion.Extensions
         /// <param name="rigidbody">Target component</param>
         /// <param name="useMovePosition">Whether to use rigidbody.MovePosition()</param>
         /// <returns>Handle of the created motion data.</returns>
-        public static MotionHandle BindToPositionX<TOptions, TAdapter>(this MotionBuilder<float, TOptions, TAdapter> builder, Rigidbody rigidbody, bool useMovePosition = true)
-            where TOptions : unmanaged, IMotionOptions
-            where TAdapter : unmanaged, IMotionAdapter<float, TOptions>
+        public static MotionHandle BindToPositionX<TOptions, TAnimationSpec>(this MotionBuilder<float, float, TOptions, TAnimationSpec> builder, Rigidbody rigidbody, bool useMovePosition = true)
+            where TOptions : unmanaged, ITweenOptions
+            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<float, TOptions>
         {
             Error.IsNull(rigidbody);
 
@@ -84,9 +84,9 @@ namespace LitMotion.Extensions
         /// <param name="rigidbody">Target component</param>
         /// <param name="useMovePosition">Whether to use rigidbody.MovePosition()</param>
         /// <returns>Handle of the created motion data.</returns>
-        public static MotionHandle BindToPositionY<TOptions, TAdapter>(this MotionBuilder<float, TOptions, TAdapter> builder, Rigidbody rigidbody, bool useMovePosition = true)
-            where TOptions : unmanaged, IMotionOptions
-            where TAdapter : unmanaged, IMotionAdapter<float, TOptions>
+        public static MotionHandle BindToPositionY<TOptions, TAnimationSpec>(this MotionBuilder<float, float, TOptions, TAnimationSpec> builder, Rigidbody rigidbody, bool useMovePosition = true)
+            where TOptions : unmanaged, ITweenOptions
+            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<float, TOptions>
         {
             Error.IsNull(rigidbody);
 
@@ -119,9 +119,9 @@ namespace LitMotion.Extensions
         /// <param name="rigidbody">Target component</param>
         /// <param name="useMovePosition">Whether to use rigidbody.MovePosition()</param>
         /// <returns>Handle of the created motion data.</returns>
-        public static MotionHandle BindToPositionZ<TOptions, TAdapter>(this MotionBuilder<float, TOptions, TAdapter> builder, Rigidbody rigidbody, bool useMovePosition = true)
-            where TOptions : unmanaged, IMotionOptions
-            where TAdapter : unmanaged, IMotionAdapter<float, TOptions>
+        public static MotionHandle BindToPositionZ<TOptions, TAnimationSpec>(this MotionBuilder<float, float, TOptions, TAnimationSpec> builder, Rigidbody rigidbody, bool useMovePosition = true)
+            where TOptions : unmanaged, ITweenOptions
+            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<float, TOptions>
         {
             Error.IsNull(rigidbody);
 
@@ -154,9 +154,9 @@ namespace LitMotion.Extensions
         /// <param name="rigidbody">Target component</param>
         /// <param name="useMovePosition">Whether to use rigidbody.MovePosition()</param>
         /// <returns>Handle of the created motion data.</returns>
-        public static MotionHandle BindToPositionXY<TOptions, TAdapter>(this MotionBuilder<Vector2, TOptions, TAdapter> builder, Rigidbody rigidbody, bool useMovePosition = true)
-            where TOptions : unmanaged, IMotionOptions
-            where TAdapter : unmanaged, IMotionAdapter<Vector2, TOptions>
+        public static MotionHandle BindToPositionXY<TOptions, TAnimationSpec>(this MotionBuilder<Vector2, Vector2, TOptions, TAnimationSpec> builder, Rigidbody rigidbody, bool useMovePosition = true)
+            where TOptions : unmanaged, ITweenOptions
+            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<Vector2, TOptions>
         {
             Error.IsNull(rigidbody);
 
@@ -191,9 +191,9 @@ namespace LitMotion.Extensions
         /// <param name="rigidbody">Target component</param>
         /// <param name="useMovePosition">Whether to use rigidbody.MovePosition()</param>
         /// <returns>Handle of the created motion data.</returns>
-        public static MotionHandle BindToPositionYZ<TOptions, TAdapter>(this MotionBuilder<Vector2, TOptions, TAdapter> builder, Rigidbody rigidbody, bool useMovePosition = true)
-            where TOptions : unmanaged, IMotionOptions
-            where TAdapter : unmanaged, IMotionAdapter<Vector2, TOptions>
+        public static MotionHandle BindToPositionYZ<TOptions, TAnimationSpec>(this MotionBuilder<Vector2, Vector2, TOptions, TAnimationSpec> builder, Rigidbody rigidbody, bool useMovePosition = true)
+            where TOptions : unmanaged, ITweenOptions
+            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<Vector2, TOptions>
         {
             Error.IsNull(rigidbody);
 
@@ -229,9 +229,9 @@ namespace LitMotion.Extensions
         /// <param name="rigidbody">Target component</param>
         /// <param name="useMovePosition">Whether to use rigidbody.MovePosition()</param>
         /// <returns>Handle of the created motion data.</returns>
-        public static MotionHandle BindToPositionXZ<TOptions, TAdapter>(this MotionBuilder<Vector2, TOptions, TAdapter> builder, Rigidbody rigidbody, bool useMovePosition = true)
-            where TOptions : unmanaged, IMotionOptions
-            where TAdapter : unmanaged, IMotionAdapter<Vector2, TOptions>
+        public static MotionHandle BindToPositionXZ<TOptions, TAnimationSpec>(this MotionBuilder<Vector2, Vector2, TOptions, TAnimationSpec> builder, Rigidbody rigidbody, bool useMovePosition = true)
+            where TOptions : unmanaged, ITweenOptions
+            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<Vector2, TOptions>
         {
             Error.IsNull(rigidbody);
 
@@ -266,9 +266,9 @@ namespace LitMotion.Extensions
         /// <param name="rigidbody">Target component</param>
         /// <param name="useMoveRotation">Whether to use rigidbody.MoveRotation()</param>
         /// <returns>Handle of the created motion data.</returns>
-        public static MotionHandle BindToRotation<TOptions, TAdapter>(this MotionBuilder<Quaternion, TOptions, TAdapter> builder, Rigidbody rigidbody, bool useMoveRotation = true)
-            where TOptions : unmanaged, IMotionOptions
-            where TAdapter : unmanaged, IMotionAdapter<Quaternion, TOptions>
+        public static MotionHandle BindToRotation<TOptions, TAnimationSpec>(this MotionBuilder<Quaternion, Quaternion, TOptions, TAnimationSpec> builder, Rigidbody rigidbody, bool useMoveRotation = true)
+            where TOptions : unmanaged, ITweenOptions
+            where TAnimationSpec : unmanaged, IVectorizedAnimationSpec<Quaternion, TOptions>
         {
             Error.IsNull(rigidbody);
 
