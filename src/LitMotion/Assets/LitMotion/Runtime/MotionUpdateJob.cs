@@ -46,10 +46,10 @@ namespace LitMotion
                     MotionTimeKind.UnscaledTime => UnscaledDeltaTime,
                     MotionTimeKind.Realtime => RealDeltaTime,
                     _ => default
-                };
+                } * state.PlaybackSpeed;
 
-                var time = state->playTimeNanos + (long)(deltaTime * state->PlaybackSpeed * 1_000_000_000); // Convert to nanoseconds
-                ptr->GetValueFromNanos(time,out var result);
+                var time = state.Time + deltaTime;
+                ptr->Update<TAdapter>(time, deltaTime, out var result);
                 Output[index] = result;
                 ptr->GetVelocityVectorFromNanos(time,out var velocity);
                 OutputVelocity[index] = velocity;

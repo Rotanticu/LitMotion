@@ -26,7 +26,10 @@ namespace LitMotion
         void Cancel(MotionHandle handle, bool checkIsInSequence = true);
         void Complete(MotionHandle handle, bool checkIsInSequence = true);
         void SetTime(MotionHandle handle, double time, bool checkIsInSequence = true);
-        ref AnimationState GetStateRef(MotionHandle handle, bool checkIsInSequence = true);
+        ref MotionData GetDataRef(MotionHandle handle, bool checkIsInSequence = true);
+        ref MotionData<ValueType, OptionsType> GetTypeDataRef<ValueType, OptionsType>(MotionHandle handle, bool checkIsInSequence = true)
+            where ValueType : unmanaged
+            where OptionsType : unmanaged, IMotionOptions;
         ref ManagedMotionData GetManagedDataRef(MotionHandle handle, bool checkIsInSequence = true);
         void AddToSequence(MotionHandle handle, out double motionDuration);
         MotionDebugInfo GetDebugInfo(MotionHandle handle);
@@ -316,9 +319,7 @@ namespace LitMotion
 
                 if (checkIsInSequence && state->IsInSequence) Error.MotionIsInSequence();
 
-                // TODO: TargetBasedAnimation 需要实现 Update 方法
-                // dataPtr->Update<VAdapter>(time, out var result);
-                dataPtr->GetValueFromNanos((long)(time * 1_000_000_000),out var result); // 转换为纳秒
+                dataPtr->Update<TAdapter>(time, time - state.Time, out var result);
 
                 var status = state->Status;
                 ref var managedData = ref managedDataArray[denseIndex];
@@ -380,17 +381,18 @@ namespace LitMotion
             return ref managedDataArray[slot.DenseIndex];
         }
 
-        public ref AnimationState GetStateRef(MotionHandle handle, bool checkIsInSequence = true)
+        public ref MotionData GetDataRef(MotionHandle handle, bool checkIsInSequence = true)
         {
             ref var slot = ref GetSlotWithVarify(handle, checkIsInSequence);
-            return ref UnsafeUtility.As<TargetBasedAnimation<TValue, VValue, TOptions, TAnimationSpec>, AnimationState>(ref unmanagedDataArray[slot.DenseIndex]);
+            return ref UnsafeUtility.As<MotionData<TValue, TOptions>, MotionData>(ref unmanagedDataArray[slot.DenseIndex]);
         }
 
-        public unsafe ref TOptions GetOptionRef(MotionHandle handle, bool checkIsInSequence = true)
+        public ref MotionData<ValueType, OptionsType> GetTypeDataRef<ValueType, OptionsType>(MotionHandle handle, bool checkIsInSequence = true)
+            where ValueType : unmanaged
+            where OptionsType : unmanaged, IMotionOptions
         {
             ref var slot = ref GetSlotWithVarify(handle, checkIsInSequence);
-            ref TAnimationSpec dataRef = ref UnsafeUtility.As<TargetBasedAnimation<TValue, VValue, TOptions, TAnimationSpec>, TAnimationSpec>(ref unmanagedDataArray[slot.DenseIndex]);
-            return ref *dataRef.Options;
+            return ref UnsafeUtility.As<MotionData<TValue, TOptions>, MotionData<ValueType, OptionsType>>(ref unmanagedDataArray[slot.DenseIndex]);
         }
 
         public unsafe MotionDebugInfo GetDebugInfo(MotionHandle handle)
