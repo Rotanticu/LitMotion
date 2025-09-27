@@ -95,8 +95,8 @@ namespace ASUI.Tests
         {
             DetectSystemLanguage();
             InitializeLocalizedStrings();
-            SetupUI();
             AutoAssignUIReferences();
+            SetupUI();
         }
         
         private void SetupUI()
