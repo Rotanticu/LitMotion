@@ -618,7 +618,18 @@ MonoBehaviour:
   smothingVelocityText: {fileID: 253275205}
   followTarget: {fileID: 478209273}
   followTargetText: {fileID: 1432528706}
+  dampingRatio: 0.5
+  stiffness: 10
+  targetVelocity: 0
+  duration: 0.02
+  smothingVelocity: 2
+  isMouseFollowActive: 0
+  lastMousePosition: {x: 0, y: 0}
+  mouseVelocity: {x: 0, y: 0}
+  startTime: 0
+  isSpringSimple: 0
   useMultiLanguage: 1
+  currentLanguageIndex: 0
 --- !u!114 &28077928
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4034,8 +4045,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   autoSetupOnStart: 1
   createUIFromScratch: 0
-  sliderColor: {r: 1, g: 1, b: 1, a: 1}
-  textColor: {r: 0, g: 0, b: 0, a: 1}
+  sliderColor:
+    r: 1
+    g: 1
+    b: 1
+    a: 1
+  textColor:
+    r: 0
+    g: 0
+    b: 0
+    a: 1
   fontSize: 14
 --- !u!1 &339661280
 GameObject:
@@ -6515,7 +6534,24 @@ MonoBehaviour:
   testPerformanceButton: {fileID: 689835732}
   stopPerformanceButton: {fileID: 1705496853}
   performanceResultText: {fileID: 1427162896}
+  dampingRatio: 0.5
+  stiffness: 10
+  targetValue: 0
+  delay: 0
+  loopCount: 0
+  loopTypeIndex: 0
+  delayTypeIndex: 0
+  performanceTestCount: 0
+  performanceTestStartTime: 0
+  isPerformanceTestRunning: 0
+  isSpringTest: 1
+  springTestTime: 0
+  tweenTestTime: 0
+  performanceTestDuration: 3
+  isComparingTest: 0
+  currentTestPhase: 0
   useMultiLanguage: 1
+  currentLanguageIndex: 0
 --- !u!114 &462941097
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11592,6 +11628,7 @@ MonoBehaviour:
   dampingRatio: 0.5
   testResults: []
   useMultiLanguage: 1
+  currentLanguageIndex: 0
 --- !u!114 &793139619
 MonoBehaviour:
   m_ObjectHideFlags: 0
