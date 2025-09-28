@@ -16,17 +16,17 @@ namespace ASUI.Tests
     {
         [Header("UI Controls")]
         [SerializeField] private Slider timeScaleSlider;
-        [SerializeField] private TextMeshProUGUI timeScaleText;
+        [SerializeField] private Text timeScaleText;
         [SerializeField] private Slider dampingRatioSlider;
-        [SerializeField] private TextMeshProUGUI dampingRatioText;
+        [SerializeField] private Text dampingRatioText;
         [SerializeField] private Slider stiffnessSlider;
-        [SerializeField] private TextMeshProUGUI stiffnessText;
+        [SerializeField] private Text stiffnessText;
         [SerializeField] private Slider targetValueSlider;
-        [SerializeField] private TextMeshProUGUI targetValueText;
+        [SerializeField] private Text targetValueText;
         [SerializeField] private Slider delaySlider;
-        [SerializeField] private TextMeshProUGUI delayText;
+        [SerializeField] private Text delayText;
         [SerializeField] private Slider loopCountSlider;
-        [SerializeField] private TextMeshProUGUI loopCountText;
+        [SerializeField] private Text loopCountText;
         [SerializeField] private Dropdown loopTypeDropdown;
         [SerializeField] private Dropdown delayTypeDropdown;
         
@@ -1047,22 +1047,22 @@ namespace ASUI.Tests
         private void UpdateUI()
         {
             if (timeScaleText != null)
-                timeScaleText.text = $"时间缩放: {timeScale:F2}x";
+                timeScaleText.text = $"{timeScale:F2}x";
             
             if (dampingRatioText != null)
-                dampingRatioText.text = $"阻尼比: {dampingRatio:F2}";
+                dampingRatioText.text = $"{dampingRatio:F2}";
             
             if (stiffnessText != null)
-                stiffnessText.text = $"刚度: {stiffness:F2}";
+                stiffnessText.text = $"{stiffness:F2}";
             
             if (targetValueText != null)
-                targetValueText.text = $"目标值: {targetValue:F3}";
+                targetValueText.text = $"{targetValue:F3}";
             
             if (delayText != null)
-                delayText.text = $"延迟: {delay:F1}s";
+                delayText.text = $"{delay:F1}s";
             
             if (loopCountText != null)
-                loopCountText.text = $"循环次数: {loopCount:F0}";
+                loopCountText.text = $"{loopCount:F0}";
         }
         
         // 自动分配UI引用
@@ -1125,7 +1125,7 @@ namespace ASUI.Tests
                         Debug.LogWarning($"未找到Button: {field.Name}");
                     }
                 }
-                else if (field.FieldType == typeof(Text) && field.Name.Contains("performanceResult"))
+                else if (field.FieldType == typeof(Text))
                 {
                     Text foundText = FindUnityTextByName(field.Name);
                     if (foundText != null)
@@ -1216,9 +1216,13 @@ namespace ASUI.Tests
             foreach (var text in allTexts)
             {
                 string textName = text.name.ToLower();
-                if (textName.Replace("label", "").Replace("value", "").Replace("text", "") == searchName)
+                if(textName.Contains(searchName))
                 {
-                    return text;
+                    string endName = textName.Replace(searchName, "");
+                    if (endName == "value" || endName == "text")
+                    {
+                        return text;
+                    }
                 }
             }
             return null;
