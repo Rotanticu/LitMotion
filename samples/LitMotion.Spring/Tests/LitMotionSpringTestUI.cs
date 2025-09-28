@@ -1135,7 +1135,7 @@ namespace ASUI.Tests
                     }
                     else
                     {
-                        Debug.LogWarning($"未找到PerformanceResultText: {field.Name}");
+                        Debug.LogWarning($"未找到: {field.Name}");
                     }
                 }
             }
@@ -1219,7 +1219,7 @@ namespace ASUI.Tests
                 if(textName.Contains(searchName))
                 {
                     string endName = textName.Replace(searchName, "");
-                    if (endName == "value" || endName == "text")
+                    if (endName == "value" || endName == "text" || endName == "result" || endName == "")
                     {
                         return text;
                     }
