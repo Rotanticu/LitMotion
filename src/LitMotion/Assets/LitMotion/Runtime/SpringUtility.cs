@@ -62,7 +62,8 @@ namespace LitMotion
             in float dampingRatio = 0.5f,
             in float stiffness = 10.0f)
         {
-            if (Hint.Unlikely(Approximately(currentValue, targetValue)))
+            float eps = dampingRatio < 1.0f ? 1e-5f : 1e-2f;
+            if (Hint.Unlikely(Approximately(currentValue, targetValue, eps)))
             {
                 currentValue = targetValue;
                 currentVelocity = 0.0f;
