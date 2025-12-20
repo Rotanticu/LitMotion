@@ -6,15 +6,22 @@ using UnityEngine;
 namespace LitMotion.Animation
 {
     [AddComponentMenu("LitMotion Animation")]
-    public sealed class LitMotionAnimation : MonoBehaviour
+    public sealed class LitMotionAnimation : MonoBehaviour, ISerializationCallbackReceiver
     {
+        enum AutoPlayMode
+        {
+            None,
+            OnStart,
+            OnEnable
+        }
+
         enum AnimationMode
         {
             Parallel,
             Sequential
         }
 
-        [SerializeField] bool playOnAwake = true;
+        [SerializeField] AutoPlayMode autoPlayMode = AutoPlayMode.OnStart;
         [SerializeField] AnimationMode animationMode;
         [SerializeField] bool solo;
         public string GroupId;
@@ -24,21 +31,25 @@ namespace LitMotion.Animation
         [SerializeReference]
         LitMotionAnimationComponent[] components;
 
-        Queue<LitMotionAnimationComponent> queue = new();
+        readonly Queue<LitMotionAnimationComponent> queue = new();
         FastListCore<LitMotionAnimationComponent> playingComponents;
         static List<LitMotionAnimation> playingLitMotionAnimations = new();
 
+        [HideInInspector, SerializeField] bool playOnAwake = true;
+        [HideInInspector, SerializeField] int version;
+
         public IReadOnlyList<LitMotionAnimationComponent> Components => components;
 
-        void Awake()
+        void OnEnable()
         {
-            if (groupIdSource != null)
-                GroupId += groupIdSource.GetInstanceID();
+            if (autoPlayMode == AutoPlayMode.OnEnable)
+                Play();
         }
 
         void Start()
         {
-            if (playOnAwake) Play();
+            if (autoPlayMode == AutoPlayMode.OnStart)
+                Play();
         }
 
         void MoveNextMotion()
@@ -218,16 +229,26 @@ namespace LitMotion.Animation
             }
         }
 
+        void OnDisable()
+        {
+            if (autoPlayMode == AutoPlayMode.OnEnable)
+                Stop();
+        }
+
         void OnDestroy()
         {
             Stop();
         }
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void OnDomainReload()
-        {
-            playingLitMotionAnimations = new();
-        }
+        void ISerializationCallbackReceiver.OnBeforeSerialize() { }
 
+        void ISerializationCallbackReceiver.OnAfterDeserialize()
+        {
+            if (version < 1)
+            {
+                autoPlayMode = playOnAwake ? AutoPlayMode.OnStart : AutoPlayMode.None;
+                version = 1;
+            }
+        }
     }
 }

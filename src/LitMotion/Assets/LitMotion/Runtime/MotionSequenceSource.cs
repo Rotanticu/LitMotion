@@ -108,8 +108,13 @@ namespace LitMotion
 
         void OnComplete()
         {
-            if (!handle.IsActive()) return;
+            if (!handle.IsValid()) return;
             if (MotionManager.GetDataRef(handle, false).State.IsPreserved) return;
+
+            foreach (var item in Items)
+            {
+                MotionManager.Cancel(item.Handle, false);
+            }
 
             Return(this);
         }
