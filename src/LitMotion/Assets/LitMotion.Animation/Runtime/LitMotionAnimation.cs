@@ -30,11 +30,8 @@ namespace LitMotion.Animation
         Queue<LitMotionAnimationComponent> queue = new();
         FastListCore<LitMotionAnimationComponent> playingComponents;
 
-        [HideInInspector]
-        [SerializeField] bool playOnAwake = true;
-
-        [HideInInspector]
-        [SerializeField] int version;
+        [HideInInspector, SerializeField] bool playOnAwake = true;
+        [HideInInspector, SerializeField] int version;
 
         public IReadOnlyList<LitMotionAnimationComponent> Components => components;
 
@@ -217,11 +214,9 @@ namespace LitMotion.Animation
             Stop();
         }
 
-        public void OnBeforeSerialize()
-        {
-        }
+        void ISerializationCallbackReceiver.OnBeforeSerialize() { }
 
-        public void OnAfterDeserialize()
+        void ISerializationCallbackReceiver.OnAfterDeserialize()
         {
             if (version < 1)
             {
