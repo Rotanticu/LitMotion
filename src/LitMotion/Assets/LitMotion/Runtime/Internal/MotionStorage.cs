@@ -19,6 +19,7 @@ namespace LitMotion
 
     internal interface IMotionStorage
     {
+        bool IsValid(MotionHandle handle);
         bool IsActive(MotionHandle handle);
         bool IsPlaying(MotionHandle handle);
         bool TryCancel(MotionHandle handle, bool checkIsInSequence = true);
@@ -210,6 +211,15 @@ namespace LitMotion
             {
                 RemoveAt(sparseSetCore.GetSlotRefUnchecked(list[i].Index).DenseIndex);
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsValid(MotionHandle handle)
+        {
+            ref var slot = ref sparseSetCore.GetSlotRefUnchecked(handle.Index);
+            if (IsDenseIndexOutOfRange(slot.DenseIndex)) return false;
+            if (IsInvalidVersion(slot.Version, handle)) return false;
+            return true;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
