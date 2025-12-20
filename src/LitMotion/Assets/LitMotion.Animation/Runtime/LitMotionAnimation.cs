@@ -27,7 +27,7 @@ namespace LitMotion.Animation
         [SerializeReference]
         LitMotionAnimationComponent[] components;
 
-        Queue<LitMotionAnimationComponent> queue = new();
+        readonly Queue<LitMotionAnimationComponent> queue = new();
         FastListCore<LitMotionAnimationComponent> playingComponents;
 
         [HideInInspector, SerializeField] bool playOnAwake = true;
