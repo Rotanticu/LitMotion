@@ -14,13 +14,13 @@ namespace LitMotion.Animation
             OnStart,
             OnEnable
         }
-        
+
         enum AnimationMode
         {
             Parallel,
             Sequential
         }
-        
+
         [SerializeField] AutoPlayMode autoPlayMode = AutoPlayMode.OnStart;
         [SerializeField] AnimationMode animationMode;
 
@@ -29,7 +29,7 @@ namespace LitMotion.Animation
 
         Queue<LitMotionAnimationComponent> queue = new();
         FastListCore<LitMotionAnimationComponent> playingComponents;
-        
+
         [HideInInspector]
         [SerializeField] bool playOnAwake = true;
 
@@ -38,7 +38,7 @@ namespace LitMotion.Animation
 
         public IReadOnlyList<LitMotionAnimationComponent> Components => components;
 
-        private void OnEnable()
+        void OnEnable()
         {
             if (autoPlayMode == AutoPlayMode.OnEnable)
                 Play();
@@ -206,7 +206,7 @@ namespace LitMotion.Animation
             }
         }
 
-        private void OnDisable()
+        void OnDisable()
         {
             if (autoPlayMode == AutoPlayMode.OnEnable)
                 Stop();
@@ -217,11 +217,10 @@ namespace LitMotion.Animation
             Stop();
         }
 
-#region ISerializationCallbackReceiver
         public void OnBeforeSerialize()
         {
         }
-        
+
         public void OnAfterDeserialize()
         {
             if (version < 1)
@@ -230,7 +229,5 @@ namespace LitMotion.Animation
                 version = 1;
             }
         }
-#endregion
-        
     }
 }
