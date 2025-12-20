@@ -14,31 +14,28 @@ namespace LitMotion.Animation
             OnStart,
             OnEnable
         }
-        
+
         enum AnimationMode
         {
             Parallel,
             Sequential
         }
-        
+
         [SerializeField] AutoPlayMode autoPlayMode = AutoPlayMode.OnStart;
         [SerializeField] AnimationMode animationMode;
 
         [SerializeReference]
         LitMotionAnimationComponent[] components;
 
-        Queue<LitMotionAnimationComponent> queue = new();
+        readonly Queue<LitMotionAnimationComponent> queue = new();
         FastListCore<LitMotionAnimationComponent> playingComponents;
-        
-        [HideInInspector]
-        [SerializeField] bool playOnAwake = true;
 
-        [HideInInspector]
-        [SerializeField] int version;
+        [HideInInspector, SerializeField] bool playOnAwake = true;
+        [HideInInspector, SerializeField] int version;
 
         public IReadOnlyList<LitMotionAnimationComponent> Components => components;
 
-        private void OnEnable()
+        void OnEnable()
         {
             if (autoPlayMode == AutoPlayMode.OnEnable)
                 Play();
@@ -206,7 +203,7 @@ namespace LitMotion.Animation
             }
         }
 
-        private void OnDisable()
+        void OnDisable()
         {
             if (autoPlayMode == AutoPlayMode.OnEnable)
                 Stop();
@@ -217,12 +214,9 @@ namespace LitMotion.Animation
             Stop();
         }
 
-#region ISerializationCallbackReceiver
-        public void OnBeforeSerialize()
-        {
-        }
-        
-        public void OnAfterDeserialize()
+        void ISerializationCallbackReceiver.OnBeforeSerialize() { }
+
+        void ISerializationCallbackReceiver.OnAfterDeserialize()
         {
             if (version < 1)
             {
@@ -230,7 +224,5 @@ namespace LitMotion.Animation
                 version = 1;
             }
         }
-#endregion
-        
     }
 }
