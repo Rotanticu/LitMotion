@@ -43,8 +43,9 @@ namespace LitMotion
                     MotionTimeKind.UnscaledTime => UnscaledDeltaTime,
                     MotionTimeKind.Realtime => RealDeltaTime,
                     _ => default
-                } * state.PlaybackSpeed;
+                };
 
+                deltaTime *= state.PlaybackSpeed;
                 var time = state.Time + deltaTime;
                 ptr->Update<TAdapter>(time, deltaTime, out var result);
                 Output[index] = result;
