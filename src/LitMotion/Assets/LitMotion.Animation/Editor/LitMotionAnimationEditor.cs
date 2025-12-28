@@ -3,7 +3,6 @@ using UnityEditor;
 using UnityEditor.UIElements;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEditor.SceneManagement;
 
 namespace LitMotion.Animation.Editor
 {
@@ -96,23 +95,6 @@ namespace LitMotion.Animation.Editor
             var box = CreateBox("Settings");
             box.Add(new PropertyField(serializedObject.FindProperty("autoPlayMode")));
             box.Add(new PropertyField(serializedObject.FindProperty("animationMode")));
-            box.Add(new PropertyField(serializedObject.FindProperty("solo")));
-            var row = new VisualElement();
-            row.style.flexDirection = FlexDirection.Row;
-            row.Add(new PropertyField(serializedObject.FindProperty("GroupId"), "Group ID, Source")
-            {
-                style = {
-                    flexGrow = 1,
-                    marginRight = 4
-                }
-            });
-            row.Add(new PropertyField(serializedObject.FindProperty("groupIdSource"))
-            {
-                style = {
-                    flexGrow = 1,
-                }
-            });
-            box.Add(row);
             return box;
         }
 
@@ -163,27 +145,6 @@ namespace LitMotion.Animation.Editor
             {
                 if (componentsProperty.arraySize != prevArraySize)
                 {
-                    if (prevArraySize < componentsProperty.arraySize)
-                    {
-                        var last_prop = componentsProperty.GetArrayElementAtIndex(componentsProperty.arraySize - 1);
-                        var last = last_prop.managedReferenceValue;
-                        object src = null;
-                        for (int i = 0; i < componentsProperty.arraySize - 1; ++i)
-                        {
-                            var value = componentsProperty.GetArrayElementAtIndex(i).managedReferenceValue;
-                            if (value == last)
-                            {
-                                src = value;
-                                break;
-                            }
-                        }
-                        if (src != null)
-                        {
-                            var cloned = JsonUtility.FromJson(JsonUtility.ToJson(src), src.GetType());
-                            last_prop.managedReferenceValue = cloned;
-                            serializedObject.ApplyModifiedProperties();
-                        }
-                    }
                     RefleshComponentsView(true);
                     prevArraySize = componentsProperty.arraySize;
                 }
@@ -231,14 +192,7 @@ namespace LitMotion.Animation.Editor
                     flexGrow = 1f,
                 }
             };
-            var playButton = new Button(() => {
-                ((LitMotionAnimation)target).Play();
-                if (PrefabStageUtility.GetCurrentPrefabStage() != null)
-                {
-                    PrefabStage.prefabStageClosing -= OnPrefabStageClosing;
-                    PrefabStage.prefabStageClosing += OnPrefabStageClosing;
-                }
-            })
+            var playButton = new Button(() => ((LitMotionAnimation)target).Play())
             {
                 text = "Play",
                 style = {
@@ -390,15 +344,6 @@ namespace LitMotion.Animation.Editor
         bool IsActive()
         {
             return !((LitMotionAnimation)target).IsActive;
-        }
-
-        void OnPrefabStageClosing(PrefabStage stage)
-        {
-            PrefabStage.prefabStageClosing -= OnPrefabStageClosing;
-            foreach (var  i in stage.prefabContentsRoot.GetComponentsInChildren<LitMotionAnimation>(true))
-            {
-                i.Stop();
-            }
         }
     }
 }
