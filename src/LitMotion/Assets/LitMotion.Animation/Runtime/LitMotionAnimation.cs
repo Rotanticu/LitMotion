@@ -23,17 +23,12 @@ namespace LitMotion.Animation
 
         [SerializeField] AutoPlayMode autoPlayMode = AutoPlayMode.OnStart;
         [SerializeField] AnimationMode animationMode;
-        [SerializeField] bool solo;
-        public string GroupId;
-        [SerializeField] GameObject groupIdSource;
-        
 
         [SerializeReference]
         LitMotionAnimationComponent[] components;
 
         readonly Queue<LitMotionAnimationComponent> queue = new();
         FastListCore<LitMotionAnimationComponent> playingComponents;
-        static List<LitMotionAnimation> playingLitMotionAnimations = new();
 
         [HideInInspector, SerializeField] bool playOnAwake = true;
         [HideInInspector, SerializeField] int version;
@@ -101,17 +96,6 @@ namespace LitMotion.Animation
             if (isPlaying) return;
 
             playingComponents.Clear();
-            if (solo)
-            {
-                for (int i = playingLitMotionAnimations.Count - 1; 0 <= i; --i)
-                {
-                    var anim = playingLitMotionAnimations[i];
-                    if (anim == null || anim.StopByGroupId(GroupId))
-                        playingLitMotionAnimations.RemoveAt(i);
-                }
-            }
-            if (!playingLitMotionAnimations.Contains(this))
-                playingLitMotionAnimations.Add(this);
 
             switch (animationMode)
             {
@@ -179,16 +163,6 @@ namespace LitMotion.Animation
 
             playingComponents.Clear();
             queue.Clear();
-        }
-
-        public bool StopByGroupId(string id)
-        {
-            if (GroupId == id || string.IsNullOrEmpty(id))
-            {
-                Stop();
-                return true;
-            }
-            return false;
         }
 
         public void Restart()
